@@ -1,0 +1,68 @@
+<%- include("partials/headerMain.ejs") %>
+
+
+<div id="fade" class="hide"></div>
+<div id="modal" class="hide w-100">
+
+  <div class="modal modal-sheet position-static d-block bg-body-secondary w-100 container" tabindex="-1" role="dialog" id="modalSheet">
+    <div class="modal-dialog m-0 w-100" role="document">
+      <div class="modal-content shadow">
+        <div class="modal-footer flex-column align-items-stretch w-100 gap-2 pb-3 border-top-0">
+          <button class="btn border px-5" type="button">
+            <a href="/addConsulta" class="nav-link">Adicionar consulta</a>
+          </button>          
+          <button class="btn border px-5" type="button">
+            <a href="/addMedico" class="nav-link">Adicionar profissional médico</a>
+          </button>        
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="container">
+  <div class="row">
+    <!-- Coluna das consultas -->
+    <div class="col-md-6">
+      <h3 class="text-center">Consultas</h3>
+      <div class="list-group">
+        <% 
+          // Ordenar as consultas por especialidade
+          consultas.sort((a, b) => {
+            return a.especialidade.localeCompare(b.especialidade);
+          });
+
+          consultas.forEach((consulta) => { %>
+            <div class="list-group-item mb-3">
+              <p class="mb-1">Especialidade: <%= consulta.especialidade %></p>
+              <p class="mb-1">Data: <%= consulta.data %></p>
+              <p class="mb-1">Horário: <%= consulta.horario %></p>
+            </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Coluna dos médicos -->
+    <div class="col-md-6">
+      <h3 class="text-center">Profissionais Médicos</h3>
+      <div class="list-group">
+        <% 
+          // Ordenar os médicos por nome
+          medicos.sort((a, b) => {
+            return a.nome_medico.localeCompare(b.nome_medico);
+          });
+
+          medicos.forEach((medico) => { %>
+            <div class="list-group-item mb-3">
+              <p class="mb-1">Nome do profissional: <%= medico.nome_medico %></p>
+              <p class="mb-1">Especialidade: <%= medico.especialidade %></p>
+            </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+  <button id="abrirModal" class="nav-link btn border px-5" type="button">Adicionar</button>
+</div>
+
+  <%- include("partials/footerMain.ejs") %>

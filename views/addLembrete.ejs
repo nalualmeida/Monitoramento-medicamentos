@@ -1,0 +1,124 @@
+<%- include("partials/headerAdd.ejs") %>
+
+<header class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+    <div class="">
+      <button type="button" class="btn btn-primary">
+        <a class="nav-link" href="/inicioTratamento">X</a>
+      </button>
+      <span class="fs-4">Novo lembrete</span>
+    </div>
+</header>
+<main class="container">
+
+<form class="position-relative bg-body" action="/addLembrete" method="post">
+    <div class="">
+    <input type="text" id="searchMedicamento" name="nome_medicamento" placeholder="Digite o nome do medicamento" oninput="searchMedicamentos()">
+    <ul id="resultadosPesquisa"></ul>
+    </div>
+
+    <h4 class="mt-5">Com que freqência você toma este medicamento?</h4>
+<div class="d-flex flex-column flex-md-row p-4 gap-4 md-5 align-items-center justify-content-center">
+
+    <div class="list-group list-group-radio d-grid gap-2 border-0">
+      <div class="position-relative">
+        <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="frequencia" id="frequencia1" value="Uma vez ao dia" checked="">
+        <label class="list-group-item py-3 pe-5" for="frequencia1">Uma vez ao dia</label>
+      </div>
+  
+      <div class="position-relative">
+        <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="frequencia" id="frequencia2" value="Duas vezes ao dia">
+        <label class="list-group-item py-3 pe-5" for="frequencia2">Duas vezes ao dia</label>
+      </div>
+  
+      <div class="position-relative">
+        <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="frequencia" id="frequencia3" value="Sob demanda">
+        <label class="list-group-item py-3 pe-5" for="frequencia3">Sob demanda (lembrete não é necessário)</label>
+      </div>
+    </div>
+  </div>
+
+  <h4 class="mt-5">Quando você gostaria de ser lembrado?</h4>
+  <div class="container">
+    <label for="horario" class="col form-label">Horário</label>
+    <input type="time" id="horario" name="horario" required>
+        <label for="dose" class="col form-label">Dose (entre 1 e 5):</label>
+        <div class="dropdown">
+            <select class="col-9 form-select" id="dose" name="dose">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+        </div>
+    </div>
+    <input id="formAddLembrete" class="nav-link" type="submit" value="Salvar">
+</form>
+
+
+<script>
+    function searchMedicamentos() {
+    const searchTerm = document.getElementById('searchMedicamento').value;
+    if (searchTerm.length >= 3) {
+        fetch(`/api/medicamentos?q=${searchTerm}`)
+            .then(response => response.json())
+            .then(data => {
+                const resultadosPesquisa = document.getElementById('resultadosPesquisa');
+                resultadosPesquisa.innerHTML = ''; // Limpa os resultados anteriores
+                data.forEach(medicamento => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = medicamento.NOME_PRODUTO;
+                    listItem.onclick = () => {
+                        // Adicione o nome do medicamento clicado ao campo de entrada de texto
+                        document.getElementById('searchMedicamento').value = medicamento.NOME_PRODUTO;
+                        resultadosPesquisa.innerHTML = ''; // Limpa os resultados da pesquisa
+                    };
+                    resultadosPesquisa.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao buscar medicamentos:', error);
+            });
+    }
+}
+
+document.getElementById('formAddLembrete').addEventListener('submit', function(event) {
+    event.preventDefault(); // Impede o envio padrão do formulário
+
+    // Obtém os valores dos campos do formulário
+    const nomeMedicamento = document.getElementById('searchMedicamento').value;
+    const frequencia = document.querySelector('input[name="frequencia"]:checked').value;
+    const horario = document.getElementById('horario').value;
+    const dose = document.getElementById('dose').value;
+
+    // Cria um objeto com os dados do lembrete
+    const lembreteData = {
+        nomeMedicamento: nomeMedicamento,
+        frequencia: frequencia,
+        horario: horario,
+        dose: dose
+    };
+
+    // Envia os dados para o servidor usando fetch API
+    fetch('/api/lembretes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(lembreteData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erro ao adicionar lembrete');
+        }
+        // Redireciona para a página "tratamento" após o sucesso
+        window.location.href = '/tratamento';
+    })
+    .catch(error => {
+        console.error('Erro ao adicionar lembrete:', error);
+        // Lida com erros de forma apropriada (exibindo uma mensagem de erro, por exemplo)
+    });
+});
+</script>
+
+  <%- include("partials/footerAdd.ejs") %>

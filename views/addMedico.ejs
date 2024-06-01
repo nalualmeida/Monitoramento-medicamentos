@@ -1,0 +1,48 @@
+<%- include("partials/headerAdd.ejs") %>
+
+<header class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+    <div class="">
+      <button type="button" class="btn btn-primary">
+        <a class="nav-link" href="/inicioSuporte">X</a>
+      </button>
+      <span class="fs-4">Novo profissional médico</span>
+    </div>
+</header>
+<main class="container">
+
+      <form class="position-relative bg-body" action="/addMedico" method="post">
+          <div class="mb-3">
+                <input type="text" class="form-control" id="nomeMedico" placeholder="Nome" name="nome_medico" required="">
+                <div class="invalid-feedback">
+                  Por favor, informar um nome.
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <input type="text" class="form-control" id="especialidadeMedico" placeholder="Especialidade" name="especialidade" required="">
+                <div class="invalid-feedback">
+                  Por favor, informar uma especialidade.
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <input type="text" class="form-control" id="enderecoMedico" placeholder="Endereço" name="endereco">
+              </div>
+
+              <div class="mb-3">
+                <input type="text" class="form-control" id="telefoneMedico" placeholder="Número para contato" name="numero_contato">
+              </div>
+
+              <div class="mb-3">
+                <input type="text" class="form-control" id="emailMedico" placeholder="Email" name="email">
+              </div>
+
+              <div class="mb-3">
+                <input type="text" class="form-control" id="websiteMedico" placeholder="Website" name="website">
+              </div>
+              
+              <input class="nav-link" type="submit" value="Salvar">
+              </div>    
+      </form>
+
+<%- include("partials/footerAdd.ejs") %>

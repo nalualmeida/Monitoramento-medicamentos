@@ -1,0 +1,27 @@
+<%- include("partials/headerMain.ejs") %>
+
+</div>
+ 
+<div class="container">
+  <div class="row">
+    <% 
+      // Ordenar os medicamentos por nome
+      lembretes.sort((a, b) => {
+        return a.nome_medicamento.localeCompare(b.nome_medicamento);
+      });
+
+      lembretes.forEach((lembrete) => { %>
+        <div class="col-md-6">
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">Medicamento: <%= lembrete.nome_medicamento %></h5>
+              <p class="card-text">Frequência: <%= lembrete.frequencia %></p>
+              <p class="card-text">Horário: <%= lembrete.horario %></p>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+  </div>
+</div>
+
+  <%- include("partials/footerMain.ejs") %>

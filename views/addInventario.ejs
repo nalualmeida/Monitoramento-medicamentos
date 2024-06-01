@@ -1,0 +1,53 @@
+<%- include("partials/headerAdd.ejs") %>
+
+<header class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+    <div class="">
+      <button type="button" class="btn btn-primary">
+        <a class="nav-link" href="/addLembrete">Voltar</a>
+      </button>
+      <span class="fs-4">Novo lembrete</span>
+    </div>
+</header>
+<main class="container">
+
+<form class="position-relative bg-body" action="">
+    <h4 class="mt-5">Você gostaria de receber lembretes para reabastecer inventário?</h4>
+    <div class="list-group">
+        <label class="list-group-item d-flex gap-3">
+          <input class="form-check-input flex-shrink-0" type="checkbox" value="" checked="" style="font-size: 1.375em;">
+          <span class="pt-1 form-checked-content">Receber lembrete</span>
+        </label>
+      </div>
+
+  <a class="nav-link" href=""></a>
+</form>
+
+
+<script>
+    function searchMedicamentos() {
+    const searchTerm = document.getElementById('searchMedicamento').value;
+    if (searchTerm.length >= 3) {
+        fetch(`/api/medicamentos?q=${searchTerm}`)
+            .then(response => response.json())
+            .then(data => {
+                const resultadosPesquisa = document.getElementById('resultadosPesquisa');
+                resultadosPesquisa.innerHTML = ''; // Limpa os resultados anteriores
+                data.forEach(medicamento => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = medicamento.NOME_PRODUTO;
+                    listItem.onclick = () => {
+                        // Adicione o nome do medicamento clicado ao campo de entrada de texto
+                        document.getElementById('searchMedicamento').value = medicamento.NOME_PRODUTO;
+                        resultadosPesquisa.innerHTML = ''; // Limpa os resultados da pesquisa
+                    };
+                    resultadosPesquisa.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao buscar medicamentos:', error);
+            });
+    }
+}
+</script>
+
+  <%- include("partials/footerAdd.ejs") %>

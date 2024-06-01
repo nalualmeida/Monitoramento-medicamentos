@@ -1,0 +1,33 @@
+<%- include("partials/headerAdd.ejs") %>
+
+<header class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+    <div class="">
+      <button type="button" class="btn btn-primary">
+        <a class="nav-link" href="/inicioSuporte">X</a>
+      </button>
+      <span class="fs-4">Nova consulta</span>
+    </div>
+</header>
+<main class="container">
+    
+    <div class="container">
+        <form class="position-relative bg-body" action="/addConsulta" method="post">
+
+                <input type="text" class="form-control" name="especialidade" id="especialidade" placeholder="Especialidade do profissional" required>
+                <div class="invalid-feedback">
+                  Por favor, informar uma especialidade.
+                </div>
+
+                <input type="text" class="form-control" name="anotacoes" id="anotacoes" placeholder="Anotações">
+
+                <label for="Data" class="col form-label">Data</label>
+                <input type="date" id="data" name="data" required>
+
+                <label for="horario" class="col form-label">Horário</label>
+                <input type="time" id="horario" name="horario" required>
+
+              <input class="nav-link" type="submit" value="Salvar">
+        </form>
+      </div>
+
+<%- include("partials/footerAdd.ejs") %>

@@ -1,0 +1,34 @@
+<%- include("partials/headerMain.ejs") %>
+
+
+<div id="fade" class="hide"></div>
+<div id="modal" class="hide w-100">
+
+  <div class="modal modal-sheet position-static d-block bg-body-secondary w-100 container" tabindex="-1" role="dialog" id="modalSheet">
+    <div class="modal-dialog m-0 w-100" role="document">
+      <div class="modal-content shadow">
+        <div class="modal-footer flex-column align-items-stretch w-100 gap-2 pb-3 border-top-0">
+          <button class="btn border px-5" type="button">
+            <a href="/addConsulta" class="nav-link">Adicionar consulta</a>
+          </button>          
+          <button class="btn border px-5" type="button">
+            <a href="/addMedico" class="nav-link">Adicionar profissional médico</a>
+          </button>        
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="">
+  <div class="position-relative text-center text-muted bg-body">
+    <h1 class="text-body-emphasis">Tudo sob controle</h1>
+    <p class="col-lg-6 mx-auto mb-4">
+      Adicione seus profissionais médicos e consultas para ter ciência de cada um deles.
+    </p>
+    <button id="abrirModal" class="nav-link btn border px-5" type="button">Começar agora</button>
+  </div>
+</div>
+
+  <%- include("partials/footerMain.ejs") %>
