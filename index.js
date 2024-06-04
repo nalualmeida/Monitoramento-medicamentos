@@ -129,7 +129,7 @@ app.get("/inicioHoje", (req, res) => {
 
 app.get('/hoje', requireAuth, async (req, res) => {
   const userId = req.session.userId;
-
+  const user = await dbGet('SELECT nome_usuario, email FROM users WHERE email = ?', [userId]);
   if (!userId) {
       return res.redirect("/login");
   }
@@ -140,7 +140,7 @@ app.get('/hoje', requireAuth, async (req, res) => {
     );
 
       if (lembretes.length > 0) {
-          res.render("hoje", { lembretes });
+          res.render("hoje", { user: user, lembretes: lembretes });
       } else {
           res.render("inicioHoje");
       }
@@ -152,6 +152,15 @@ app.get('/hoje', requireAuth, async (req, res) => {
 
 app.get("/inicioProgresso", requireAuth, (req, res) => {
   res.render("inicioProgresso.ejs");
+});
+
+app.get("/progresso", requireAuth, (req, res) => {
+  res.render("progresso.ejs");
+});
+
+app.get('/progresso', requireAuth, (req, res) => {
+  res.sendFile(__dirname + "/progresso.ejs");
+
 });
 
 app.get("/inicioSuporte", requireAuth, (req, res) => {
