@@ -1,51 +1,128 @@
-<%- include("partials/headerMain.ejs") %>
+<!DOCTYPE html>
+<html lang="pt">
 
+<head>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css' rel='stylesheet'>
+  <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css' rel='stylesheet'>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Terapia - Suporte</title>
+  <style>
+    /* Estilos para os cards */
+    .card {
+      margin: 10px 0;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: scale(1.02);
+    }
+    .card-header {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    .card-body {
+      font-size: 1em;
+    }
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+    }
+    .btn-edit, .btn-delete {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
 
 <div id="fade" class="hide"></div>
-<div id="modal" class="hide w-100">
-
-  <div class="modal modal-sheet position-static d-block bg-body-secondary w-100 container" tabindex="-1" role="dialog" id="modalSheet">
-    <div class="modal-dialog m-0 w-100" role="document">
-      <div class="modal-content shadow">
-        <div class="modal-footer flex-column align-items-stretch w-100 gap-2 pb-3 border-top-0">
-          <button class="btn border px-5" type="button">
-            <a href="/addConsulta" class="nav-link">Adicionar consulta</a>
-          </button>          
-          <button class="btn border px-5" type="button">
-            <a href="/addMedico" class="nav-link">Adicionar profissional médico</a>
-          </button>        
+  <div id="modal" class="hide">
+  
+    <div class="modal modal-sheet position-static d-block bg-body-secondary" tabindex="-1" role="dialog" id="modalSheet">
+      <div class="modal-dialog mx-0 my-0" role="document">
+        <div class="modal-content">
+          <div class="modal-footer flex-column align-items-stretch gap-2 pb-3 border-top-0">
+            <button class="btn btn-info" type="button">
+              <a href="/addConsulta" class="nav-link text-black text-decoration-none">Adicionar consulta</a>
+            </button>          
+            <button class="btn btn-info" type="button">
+              <a href="/addMedico" class="nav-link text-black text-decoration-none">Adicionar profissional médico</a>
+            </button>        
+          </div>
         </div>
       </div>
     </div>
+  
   </div>
 
-</div>
+  <div class="container">
+    <header class="navbar navbar-expand-md fixed-top py-3">
+      <div class="container-fluid flex-nowrap justify-content-between align-items-center">
+        <svg class="bi me-2" width="40" height="32">LOGO DO APP</svg>
+        <h2>Minha Terapia</h2>
+        <div class="">
+          <ul class="navbar-nav me-auto mb-md-0"></ul>
+          <button type="button" class="btn btn-outline-light" onclick="confirmLogout()">Sair</button>
+        </div>
+      </div>
+    </header>
+  </div>
 
-<div class="container">
-  <div class="row">
-    <!-- Coluna das consultas -->
+  <main class="py-5">
+    <div class="mt-5 pt-5 mb-5 text-center container d-flex flex-column">
+      <button id="abrirModal" class="btn btn-info" type="button">Adicionar</button>
+      <div class="position-relative text-center text-muted w-100 d-flex flex-row">
+        <div class="mt-4 container d-flex row align-items-start">
+          <!-- Coluna das consultas -->
     <div class="col-md-6">
-      <h3 class="text-center">Consultas</h3>
+      <h3 class="text-center text-black">Consultas</h3>
       <div class="list-group">
         <% 
-          // Ordenar as consultas por especialidade
+          // Ordenar as consultas por data e horário
           consultas.sort((a, b) => {
-            return a.especialidade.localeCompare(b.especialidade);
-          });
+                  const dateA = new Date(a.data + 'T' + a.horario);
+                  const dateB = new Date(b.data + 'T' + b.horario);
+                  return dateA - dateB;
+                });
 
-          consultas.forEach((consulta) => { %>
-            <div class="list-group-item mb-3">
-              <p class="mb-1">Especialidade: <%= consulta.especialidade %></p>
-              <p class="mb-1">Data: <%= consulta.data %></p>
-              <p class="mb-1">Horário: <%= consulta.horario %></p>
-            </div>
-        <% }) %>
+          if (consultas.length > 0) { %>
+            <ul class="list-group">
+              <% consultas.forEach((consulta) => { %>
+                <li class="list-group-item card">
+                <div class="card-header">
+                  Especialidade: <%= consulta.especialidade %>
+                </div>
+                <div class="card-body">
+                  <p><strong>Data:</strong> <%= consulta.data %></p>
+                  <p><strong>Horário:</strong> <%= consulta.horario %></p>
+                  <p><strong>Anotação:</strong> <%= consulta.anotacoes %></p>
+                </div>
+                <div class="card-footer">
+                  <button class="btn btn-warning btn-edit" onclick="window.location.href='/editConsulta/<%= consulta.id_consulta %>'">Editar</button>
+                  <form action="/deleteConsulta/<%= consulta.id_consulta %>" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta consulta?');">
+                    <button type="submit" class="btn btn-danger btn-delete">Excluir</button>
+                  </form>
+                </div>
+              </li>
+              <% }) %>
+            </ul>
+            <% } else { %>
+      <p>Nenhuma consulta encontrada.</p>
+    <% } %>
+
       </div>
     </div>
 
-    <!-- Coluna dos médicos -->
+    <!-- Coluna dos medicos -->
     <div class="col-md-6">
-      <h3 class="text-center">Profissionais Médicos</h3>
+      <h3 class="text-center text-black">Profissionais Médicos</h3>
       <div class="list-group">
         <% 
           // Ordenar os médicos por nome
@@ -53,16 +130,60 @@
             return a.nome_medico.localeCompare(b.nome_medico);
           });
 
-          medicos.forEach((medico) => { %>
-            <div class="list-group-item mb-3">
-              <p class="mb-1">Nome do profissional: <%= medico.nome_medico %></p>
-              <p class="mb-1">Especialidade: <%= medico.especialidade %></p>
-            </div>
-        <% }) %>
+          if (medicos.length > 0) { %>
+            <ul class="list-group">
+              <% medicos.forEach((medico) => { %>
+                <li class="list-group-item card">
+                <div class="card-header">
+                  Dr(a).: <%= medico.nome_medico %>
+                </div>
+                <div class="card-body">
+                  <p><strong>Especialidade:</strong> <%= medico.especialidade %></p>
+                  <p><strong>Endereço:</strong> <%= medico.endereco %></p>
+                  <p><strong>Número para Contato:</strong> <%= medico.numero_contato %></p>
+                  <p><strong>E-mail:</strong> <%= medico.email %></p>
+                  <p><strong>Website:</strong> <%= medico.website %></p>
+                </div>
+                <div class="card-footer">
+                  <button class="btn btn-warning btn-edit" onclick="window.location.href='/editMedico/<%= medico.id_medico %>'">Editar</button>
+                  <form action="/deleteMedico/<%= medico.id_medico %>" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este médico?');">
+                    <button type="submit" class="btn btn-danger btn-delete">Excluir</button>
+                  </form>
+                </div>
+              </li>
+              <% }) %>
+            </ul>
+            <% } else { %>
+      <p>Nenhum médico encontrado.</p>
+    <% } %>
+    
       </div>
     </div>
+        </div>
+
+    
+
   </div>
-  <button id="abrirModal" class="nav-link btn border px-5" type="button">Adicionar</button>
+  
 </div>
 
-  <%- include("partials/footerMain.ejs") %>
+</main>
+
+<footer class="border-bottom py-3 fixed-bottom text-center">
+  <div class="row align-items-center">
+    <div class="col nav-item">
+      <a href="/hoje" class="nav-link text-white text-decoration-none">Hoje</a>
+    </div>
+    <div class="col nav-item">
+      <a class="nav-link text-white text-decoration-none" href="/suporte">Suporte</a>
+    </div>
+    <div class="col nav-item">
+      <a class="nav-link text-white text-decoration-none" href="/tratamento">Tratamento</a>
+    </div>
+  </div>
+</footer>
+
+<script src="scripts.js"></script>
+
+</body>
+</html>

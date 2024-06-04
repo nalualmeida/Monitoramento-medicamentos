@@ -1,34 +1,81 @@
-<%- include("partials/headerMain.ejs") %>
+<!DOCTYPE html>
+<html lang="pt">
 
+<head>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css' rel='stylesheet'>
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css' rel='stylesheet'>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Terapia - Suporte</title>
+</head>
 
-<div id="fade" class="hide"></div>
-<div id="modal" class="hide w-100">
-
-  <div class="modal modal-sheet position-static d-block bg-body-secondary w-100 container" tabindex="-1" role="dialog" id="modalSheet">
-    <div class="modal-dialog m-0 w-100" role="document">
-      <div class="modal-content shadow">
-        <div class="modal-footer flex-column align-items-stretch w-100 gap-2 pb-3 border-top-0">
-          <button class="btn border px-5" type="button">
-            <a href="/addConsulta" class="nav-link">Adicionar consulta</a>
-          </button>          
-          <button class="btn border px-5" type="button">
-            <a href="/addMedico" class="nav-link">Adicionar profissional médico</a>
-          </button>        
+<body>
+  <div id="fade" class="hide"></div>
+  <div id="modal" class="hide">
+  
+    <div class="modal modal-sheet position-static d-block bg-body-secondary" tabindex="-1" role="dialog" id="modalSheet">
+      <div class="modal-dialog mx-0 my-0" role="document">
+        <div class="modal-content">
+          <div class="modal-footer flex-column align-items-stretch gap-2 pb-3 border-top-0">
+            <button class="btn btn-info" type="button">
+              <a href="/addConsulta" class="nav-link text-black text-decoration-none">Adicionar consulta</a>
+            </button>          
+            <button class="btn btn-info" type="button">
+              <a href="/addMedico" class="nav-link text-black text-decoration-none">Adicionar profissional médico</a>
+            </button>        
+          </div>
         </div>
       </div>
     </div>
+  
   </div>
 
-</div>
+  <div class="container">
+    <header class="navbar navbar-expand-md fixed-top py-3">
+      <div class="container-fluid flex-nowrap justify-content-between align-items-center">
+        <svg class="bi me-2" width="40" height="32">LOGO DO APPP</svg>
+        <h2>Minha Terapia</h2>
+        <div class="">
+          <ul class="navbar-nav me-auto mb-md-0"></ul>
+          <button type="button" class="btn btn-outline-light" onclick="confirmLogout()">Sair</button>
+        </div>
+      </div>
+  </header>
+  </div>
 
-<div class="">
-  <div class="position-relative text-center text-muted bg-body">
-    <h1 class="text-body-emphasis">Tudo sob controle</h1>
+  <main class="py-5">
+    <div class="mt-5 pt-5 text-center">
+      <div class="position-relative text-center text-muted mt-5">
+    <h1 class="text-body-emphasis">Tudo sob controle!</h1>
     <p class="col-lg-6 mx-auto mb-4">
       Adicione seus profissionais médicos e consultas para ter ciência de cada um deles.
     </p>
-    <button id="abrirModal" class="nav-link btn border px-5" type="button">Começar agora</button>
+    <button id="abrirModal" class="btn btn-info" type="button">Começar agora</button>
   </div>
 </div>
 
-  <%- include("partials/footerMain.ejs") %>
+</main>
+
+
+<footer class="border-bottom py-3 fixed-bottom text-center">
+  <div class="row align-items-center">
+    <div class="col nav-item">
+      <a href="/hoje" class="nav-link text-white text-decoration-none">Hoje</a>
+    </div>
+    <div class="col nav-item">
+      <a class="nav-link text-white text-decoration-none" href="/suporte">Suporte</a>
+    </div>
+    <div class="col nav-item">
+      <a class="nav-link text-white text-decoration-none" href="/tratamento">Tratamento</a>
+    </div>
+  </div>
+</footer>
+
+<script src="scripts.js"></script>
+
+</body>
+</html>

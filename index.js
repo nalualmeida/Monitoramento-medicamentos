@@ -1,16 +1,37 @@
 import express from "express";
 import bodyParser from "body-parser";
+import bcrypt from "bcrypt";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import medicamentosRouter from './routes/medicamentos.js';
-
+import { promisify } from 'util';
 import sqlite3 from "sqlite3";
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import session from 'express-session';
+import crypto from 'crypto'
+import medicamentosRouter from './routes/medicamentos.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = 4000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
+
+const secret = crypto.randomBytes(64).toString('hex');
+
+app.use(session({
+  secret: secret,
+  resave: false,
+  saveUninitialized: true
+}));
+
+const requireAuth = (req, res, next) => {
+  if (!req.session.userId) {
+    return res.redirect('/login'); // ou enviar uma resposta de erro
+  }
+  next();
+};
 
 // Conexão banco de dados SQLite
 let db = new sqlite3.Database('./DB-Lembrete Medicamentos', (err) => {
@@ -20,6 +41,10 @@ let db = new sqlite3.Database('./DB-Lembrete Medicamentos', (err) => {
     console.log('Conexão bem sucedida ao banco de dados.');
   }
 });
+
+const dbGet = promisify(db.get).bind(db);
+const dbAll = promisify(db.all).bind(db);
+const dbRun = promisify(db.run).bind(db);
 
 app.set('view engine', 'ejs');
 app.use(express.static("public"));
@@ -34,28 +59,24 @@ app.get("/signup", (req, res) => {
 });
 
 app.post("/signup", async (req, res) => {
-  const { nome, dataNascimento, email, senha } = req.body;
+  const { nome_usuario, data_nascimento, email, senha } = req.body;
 
   try {
-    const checkResult = await db.get("SELECT * FROM users WHERE email = ?", [email]);
+    const hashedPassword = await bcrypt.hash(senha, 10);
+    const user = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
 
-    // if (checkResult) {
-    //   res.send("Este usuário já existe! Tente fazer login em sua conta.");
-    // } else {
-      db.run(
-        `INSERT INTO users (nome, dataNascimento, email, senha) VALUES (?, ?, ?, ?)`,
-        [nome, dataNascimento, email, senha],
-        function (err) {
-          if (err) {
-            console.error('Erro ao inserir usuário:', err.message);
-            res.send('Erro ao adicionar usuário');
-          } else {
-            console.log(`Usuário adicionado com sucesso, ID: ${this.lastID}`);
-            res.redirect("/inicioHoje");
-          }
-        }
+    if (user) {
+      res.send("Este usuário já existe! Tente fazer login em sua conta.");
+    } else {
+      await dbRun(
+        `INSERT INTO users (nome_usuario, data_nascimento, email, senha) VALUES (?, ?, ?, ?)`,
+        [nome_usuario, data_nascimento, email, hashedPassword]
       );
-    } catch (err) {
+      req.session.userId = email; // Configurar a sessão com o email do usuário
+      console.log("Novo usuário registrado e autenticado, ID do usuário:", req.session.userId);
+      return res.redirect("/inicioHoje");
+    }
+  } catch (err) {
     console.error('Erro ao verificar usuário:', err.message);
     res.status(500).send('Erro interno do servidor');
   }
@@ -69,57 +90,36 @@ app.post("/login", async (req, res) => {
   const { email, senha } = req.body;
 
   try {
-    console.log("Email inserido:", email);
-
-    const checkResult = await db.get("SELECT * FROM users WHERE email = ?", [email]);
-    console.log("Resultado da consulta:", checkResult);
-
-    if (checkResult) {
-      console.log("Dados do usuário:", checkResult);
-      const user = checkResult;
-      const senhaSalva = user.senha;
-      console.log("Senha salva no banco de dados:", senhaSalva);
-
-      if (senha === senhaSalva) {
-        console.log("Login bem-sucedido!");
-        res.render("hoje.ejs");
+    const user = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
+    if (user) {
+      const senhaCorreta = await bcrypt.compare(senha, user.senha);
+      if (senhaCorreta) {
+        req.session.userId = user.email;
+        console.log("Usuário autenticado, ID do usuário:", req.session.userId);
+        res.redirect("/hoje");
       } else {
-        console.log("Senha incorreta. Senha inserida:", senha);
         res.send("Senha incorreta");
       }
     } else {
-      console.log("Usuário não encontrado.");
       res.send("Usuário não encontrado");
     }
   } catch (err) {
-    console.error("Erro durante a autenticação:", err);
-    res.status(500).send("Erro durante a autenticação");
+    console.log(err);
+    res.status(500).send('Erro interno do servidor');
   }
 });
 
-// app.post("/login", async (req, res) => {
-//   const { email, senha } = req.body;
+app.get("/logout", (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error("Erro ao encerrar sessão:", err);
+      return res.status(500).send("Erro ao encerrar sessão");
+    }
+    res.redirect("/login");
+  });
+});
 
-//   try {
-//     const checkResult = await db.get("SELECT * FROM users WHERE email = ?", [email]);
-
-//     if (checkResult) {
-//       const user = checkResult;
-//       const senhaSalva = user.senha;
-//       if (senha === senhaSalva) {
-//         res.render("hoje.ejs");
-//       } else {
-//         res.send("Senha incorreta");
-//       }
-//     } else {
-//       res.send("Usuário não encontrado");
-//     }
-//   } catch (err) {
-//     console.log(err);
-//   }
-// });
-
-app.get("/inicioHoje", (req, res) => {
+app.get("/inicioHoje", requireAuth, (req, res) => {
   res.render("inicioHoje.ejs");
 });
 
@@ -127,169 +127,249 @@ app.get("/inicioHoje", (req, res) => {
   res.sendFile(__dirname + "/inicioHoje.ejs");
   });
 
-app.get('/hoje', (req, res) => {
-    db.all(`SELECT * FROM lembretes`, (err, lembretes) => {
-      if (err) {
-        console.error('Erro ao consultar lembretes:', err.message);
-        res.send('Erro ao consultar lembretes');
-        return;
-      } else {
-        res.render("hoje.ejs", { lembretes });
-      }
-      
-      // db.get(`SELECT COUNT(*) AS count FROM lembretes`, (err, result) => {
-      //   if (err) {
-      //     console.error('Erro ao contar lembretes:', err.message);
-      //     res.send('Erro ao contar lembretes');
-      //     return;
-      //   }
-        
-      //   const hasInfoHoje = result.count > 0; // Verificar se há lembretes
-      //   console.log('hasInfoHoje:', hasInfoHoje);
-      //   // Renderiza a página 'hoje.ejs' e passa 'lembretes' e 'hasInfoHoje' como parâmetros
-      //   res.render("hoje.ejs", { lembretes, hasInfoHoje });
-      // });
-    });
-  });  
+app.get('/hoje', requireAuth, async (req, res) => {
+  const userId = req.session.userId;
 
-app.get("/inicioProgresso", (req, res) => {
+  if (!userId) {
+      return res.redirect("/login");
+  }
+  try {
+    const lembretes = await dbAll(
+      "SELECT * FROM lembretes WHERE id_usuario = ?",
+      [userId]
+    );
+
+      if (lembretes.length > 0) {
+          res.render("hoje", { lembretes });
+      } else {
+          res.render("inicioHoje");
+      }
+  } catch (err) {
+      console.error("Erro ao obter lembretes:", err.message);
+      res.status(500).send("Erro ao carregar a página");
+  }
+});
+
+app.get("/inicioProgresso", requireAuth, (req, res) => {
   res.render("inicioProgresso.ejs");
 });
 
-app.get("/inicioSuporte", (req, res) => {
+app.get("/inicioSuporte", requireAuth, (req, res) => {
   res.render("inicioSuporte.ejs");
 });
 
-app.get('/suporte', (req, res) => {
-  db.all(`SELECT * FROM consultas`, (err, consultas) => {
-    if (err) {
-      console.error('Erro ao consultar consultas:', err.message);
-      res.send('Erro ao consultar consultas');
-      return;
-    }
+app.get('/suporte', requireAuth, async (req, res) => {
+  const userId = req.session.userId;
 
-    db.all(`SELECT * FROM medicos`, (err, medicos) => {
-      if (err) {
-        console.error('Erro ao consultar medicos:', err.message);
-        res.send('Erro ao consultar medicos');
-        return;
-      }
+  if (!userId) {
+      return res.redirect("/login");
+  }
 
-      res.render("suporte.ejs", { consultas, medicos });
+  try {
+    const consultas = await dbAll(
+      "SELECT * FROM consultas WHERE id_usuario = ?",
+    [userId]
+    );
+    const medicos = await dbAll(
+      "SELECT * FROM medicos WHERE id_usuario = ?",
+    [userId]
+    );
 
-      // db.get(`SELECT COUNT(*) AS countConsultas FROM consultas`, (err, resultConsultas) => {
-      //   if (err) {
-      //     console.error('Erro ao contar consultas', err.message);
-      //     res.send('Erro ao contar consultas');
-      //     return;
-      //   }
-      //   db.get(`SELECT COUNT(*) AS countMedicos FROM medicos`, (err, resultMedicos) => {
-      //     if (err) {
-      //       console.error('Erro ao contar médicos:', err.message);
-      //       res.send('Erro ao contar médicos');
-      //       return;
-      //     }
-
-      //     const hasInfoSuporte = resultConsultas.countConsultas > 0 || resultMedicos.countMedicos > 0;
-      //     console.log('hasInfoSuporte:', hasInfoSuporte); // Adiciona um log para verificar o valor de hasInfoSuporte
-
-      //     // Renderiza a página 'suporte.ejs' e passa 'consultas', 'medicos' e 'hasInfoSuporte' como parâmetros
-      //     res.render("suporte.ejs", { consultas, medicos, hasInfoSuporte });
-      //   });
-      // });
-    });
-  });
+    if (consultas.length > 0 | medicos.length > 0) {
+      res.render("suporte", { consultas, medicos });
+  } else {
+      res.render("inicioSuporte");
+  } }catch (err) {
+    console.error("Erro ao obter registros:", err.message);
+    res.status(500).send("Erro ao carregar a página");
+}
 });
 
-app.get("/addConsulta", (req, res) => {
+app.get("/addConsulta", requireAuth, (req, res) => {
   res.render("addConsulta.ejs");
 });
 
-app.post("/addConsulta", (req, res) => {
+app.post("/addConsulta", requireAuth, async (req, res) => {
   const { especialidade, anotacoes, data, horario } = req.body;
+  const userId = req.session.userId;
 
-  db.run(`INSERT INTO consultas (especialidade, anotacoes, data, horario) VALUES (?, ?, ?, ?)`,
-        [especialidade, anotacoes, data, horario],
-        function(err) {
-            if (err) {
-                console.error('Erro ao inserir consulta:', err.message);
-                res.send('Erro ao adicionar consulta');
-            } else {
-                console.log(`Consulta adicionada com sucesso, ID: ${this.lastID}`);
-                res.redirect("/suporte");
-            }
-        }
+  if (!userId) {
+    return res.status(401).send('Usuário não autenticado');
+  }
+
+  try {
+    await dbRun(
+      `INSERT INTO consultas (id_usuario, especialidade, anotacoes, data, horario) VALUES (?, ?, ?, ?, ?)`,
+        [userId, especialidade, anotacoes, data, horario]
     );
+    res.redirect("/suporte");
+  } catch (err) {
+    console.error('Erro ao salvar consulta:', err.message);
+    res.status(500).send('Erro ao salvar consulta');
+  }
+    
+    });
+
+app.post("/deleteConsulta/:id", async (req, res) => {
+  const userId = req.session.userId;
+  const consultaId = req.params.id;
+
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  try {
+    const consulta = await dbGet(
+      "SELECT * FROM consultas WHERE id_consulta = ?",
+      [consultaId]
+    );
+
+    await dbRun(
+      "DELETE FROM consultas WHERE id_consulta = ?",
+      [consultaId]
+    );
+  
+    res.redirect("/suporte");
+  } catch (err) {
+    console.error("Erro ao excluir consulta:", err.message);
+    res.status(500).send("Erro ao excluir o consulta");
+  }
 });
 
-app.get("/addMedico", (req, res) => {
+app.get("/addMedico", requireAuth, (req, res) => {
   res.render("addMedico.ejs");
 });
 
-app.post("/addMedico", (req, res) => {
+app.post("/addMedico", requireAuth, async (req, res) => {
   const { nome_medico, especialidade, endereco, numero_contato, email, website } = req.body;
+  const userId = req.session.userId;
 
-  db.run(`INSERT INTO medicos (nome_medico, especialidade, endereco, numero_contato, email, website) VALUES (?, ?, ?, ?, ?, ?)`,
-        [nome_medico, especialidade, endereco, numero_contato, email, website],
-        function(err) {
-            if (err) {
-                console.error('Erro ao inserir medico:', err.message);
-                res.send('Erro ao adicionar medico');
-            } else {
-                console.log(`Médico adicionado com sucesso, ID: ${this.lastID}`);
-                res.redirect("/suporte");
-            }
-        }
+  if (!userId) {
+    return res.status(401).send('Usuário não autenticado');
+  }
+
+  try {
+    await dbRun(
+      `INSERT INTO medicos (id_usuario, nome_medico, especialidade, endereco, numero_contato, email, website) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [userId, nome_medico, especialidade, endereco, numero_contato, email, website]
     );
+    res.redirect("/suporte");
+  } catch (err) {
+    console.error('Erro ao salvar médico:', err.message);
+    res.status(500).send('Erro ao salvar médico');
+  }
+    
+    });
+
+app.post("/deleteMedico/:id", async (req, res) => {
+  const userId = req.session.userId;
+  const medicoId = req.params.id;
+
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  try {
+    const medico = await dbGet(
+      "SELECT * FROM medicos WHERE id_medico = ?",
+      [medicoId]
+    );
+
+    await dbRun(
+      "DELETE FROM medicos WHERE id_medico = ?",
+      [medicoId]
+    );
+  
+    res.redirect("/suporte");
+  } catch (err) {
+    console.error("Erro ao excluir médico:", err.message);
+    res.status(500).send("Erro ao excluir o médico");
+  }
 });
 
-app.get("/inicioTratamento", (req, res) => {
+app.get("/inicioTratamento", requireAuth, (req, res) => {
   res.render("inicioTratamento.ejs");
 });
 
-app.get('/tratamento', (req, res) => {
-  db.all(`SELECT * FROM lembretes`, (err, lembretes) => {
-    if (err) {
-      console.error('Erro ao consultar lembretes:', err.message);
-      res.send('Erro ao consultar lembretes');
-    } else {
-      res.render("tratamento.ejs", { lembretes });
-    }
-  });
+app.get('/tratamento', requireAuth, async (req, res) => {
 
-  // db.get(`SELECT COUNT(*) AS count FROM lembretes`, (err, result) => {
-  //   if (err) {
-  //     console.error('Erro ao contar lembretes:', err.message);
-  //     res.send('Erro ao contar lembretes');
-  //   } else {
-  //     const hasInfoTratamento = result.count > 0; // Verificar se há lembretes
-  //     res.render("tratamento.ejs", { hasInfoTratamento });
-  //   }
-  // });
+  const userId = req.session.userId;
+
+  if (!userId) {
+      return res.redirect("/login");
+  }
+
+  try {
+    const lembretes = await dbAll(
+      "SELECT * FROM lembretes WHERE id_usuario = ?",
+    [userId]
+    );
+
+    if (lembretes.length > 0) {
+      res.render("tratamento", { lembretes });
+  } else {
+      res.render("inicioTratamento");
+  }
+    
+  } catch (err) {
+    console.error("Erro ao obter lembretes:", err.message);
+    res.status(500).send("Erro ao carregar a página");
+}
+
 });
 
-app.get('/addLembrete', (req, res) => {
+app.get('/addLembrete', requireAuth, (req, res) => {
       res.render('addLembrete');
     });
 
-app.post("/addLembrete", (req, res) => {
+app.post("/addLembrete", requireAuth, async (req, res) => {
       const { nome_medicamento, frequencia, horario, dose } = req.body;
-    
-      db.run(`INSERT INTO lembretes (nome_medicamento, frequencia, horario, dose) VALUES (?, ?, ?, ?)`,
-            [nome_medicamento, frequencia, horario, dose],
-            function(err) {
-                if (err) {
-                    console.error('Erro ao inserir lembrete:', err.message);
-                    res.send('Erro ao adicionar lembrete');
-                } else {
-                    console.log(`Lembrete adicionado com sucesso, ID: ${this.lastID}`);
-                    res.redirect("/tratamento");
-                }
-            }
-        );
-    });       
+      const userId = req.session.userId;
 
-app.get('/addInventario', (req, res) => {
+  if (!userId) {
+    return res.status(401).send('Usuário não autenticado');
+  }
+
+  try {
+    await dbRun(
+      `INSERT INTO lembretes (id_usuario, nome_medicamento, frequencia, horario, dose) VALUES (?, ?, ?, ?, ?)`,
+            [userId, nome_medicamento, frequencia, horario, dose]
+    );
+    res.redirect("/tratamento");
+  } catch (err) {
+    console.error('Erro ao salvar lembrete:', err.message);
+    res.status(500).send('Erro ao salvar lembrete');
+  }
+    
+    });
+    
+    app.post("/deleteLembrete/:id", async (req, res) => {
+      const userId = req.session.userId;
+      const lembreteId = req.params.id;
+    
+      if (!userId) {
+        return res.redirect("/login");
+      }
+    
+      try {
+        const lembrete = await dbGet(
+          "SELECT * FROM lembretes WHERE id_lembrete = ?",
+          [lembreteId]
+        );
+    
+        await dbRun(
+          "DELETE FROM lembretes WHERE id_lembrete = ?",
+          [lembreteId]
+        );
+      
+        res.redirect("/tratamento");
+      } catch (err) {
+        console.error("Erro ao excluir lembrete:", err.message);
+        res.status(500).send("Erro ao excluir o lembrete");
+      }
+    });
+
+app.get('/addInventario', requireAuth, (req, res) => {
   res.render('addInventario');
 });
 
