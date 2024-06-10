@@ -13,10 +13,6 @@
   <title>Minha Terapia - Tratamento</title>
   <style>
     /* Estilos para os cards */
-    #width-card-medicamento {
-      width: 60%;
-    }
-
     .card {
       margin: 10px 0;
       padding: 20px;
@@ -30,9 +26,11 @@
     .card-header {
       font-size: 1.2em;
       font-weight: bold;
+      background-color: #39bfc2;
     }
     .card-body {
       font-size: 1em;
+      background-color: #353d3d11;
     }
     .card-footer {
       display: flex;
@@ -60,12 +58,14 @@
 </div>
 
 <main class="py-5">
-  <div class="mt-5 pt-5 text-center container">
-    <div id="width-card-medicamento" class="position-relative text-center text-muted mb-5">
+  <div class="mt-5 pt-2 text-center container">
+    <div class="text-center text-muted container d-flex flex-column mb-5">
       <h1 class="text-body-emphasis">Seus medicamentos</h1>
       <button class="btn btn-info my-2" type="button">
         <a href="/addLembrete" class="nav-link text-black text-decoration-none">Adicionar novo lembrete</a>
       </button>
+      <div class="row">
+
     <% 
       // Ordenar os medicamentos por nome
       lembretes.sort((a, b) => {
@@ -73,17 +73,26 @@
       }); %>
 
       <% if (lembretes.length > 0) { %>
-          <ul class="list-group">
+          <ul class="col-md-6 col-lg-12 list-group">
             <% lembretes.forEach((lembrete) => { %>
               <li class="list-group-item card">
                 <div class="card-header">
                   Medicamento: <%= lembrete.nome_medicamento %>
                 </div>
                 <div class="card-body">
-                  <p><strong>Frequência:</strong> <%= lembrete.frequencia %></p>
-                  <p><strong>Dose:</strong> <%= lembrete.dose %></p>
-                  <p><strong>Horário:</strong> <%= lembrete.horario %></p>
-                </div>
+                  <% if (lembrete.frequencia) { %>
+                      <p><strong>Frequência:</strong> <%= lembrete.frequencia %></p>
+                      <% if (lembrete.frequencia === 'Uma vez ao dia') { %>
+                          <p><strong>Horário:</strong> <%= lembrete.horario1 %></p>
+                      <% } else if (lembrete.frequencia === 'Duas vezes ao dia') { %>
+                          <p><strong>Primeiro Horário:</strong> <%= lembrete.horario1 %></p>
+                          <p><strong>Segundo Horário:</strong> <%= lembrete.horario2 %></p>
+                      <% } %>
+                  <% } %>
+                  <% if (lembrete.dose) { %>
+                      <p><strong>Dose(s):</strong> <%= lembrete.dose %></p>
+                  <% } %>
+              </div>
                 <div class="card-footer">
                   <button class="btn btn-warning btn-edit" onclick="window.location.href='/editLembrete/<%= lembrete.id_lembrete %>'">Editar</button>
                   <form action="/deleteLembrete/<%= lembrete.id_lembrete %>" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este lembrete?');">
@@ -96,9 +105,7 @@
     <% } else { %>
       <p>Nenhum registro encontrado.</p>
     <% } %>
-
-
-      
+  </div>      
   </div>
 </div>
 

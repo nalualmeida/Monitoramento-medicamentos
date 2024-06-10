@@ -13,15 +13,11 @@
   <title>Minha Terapia - Hoje</title>
   <style>
     /* Estilos para os cards */
-    #width-card-lembrete {
-      width: 50%;
-    }
-
     .card {
-      margin: 10px 0;
+      margin: 10px;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 8px #39c287;
       transition: transform 0.2s;
     }
     .card:hover {
@@ -30,16 +26,23 @@
     .card-header {
       font-size: 1.2em;
       font-weight: bold;
+      background-color: #28d4ff;
     }
     .card-body {
       font-size: 1em;
+      background-color: #353d3d11;
     }
     .card-footer {
       display: flex;
       justify-content: space-between;
     }
-    .btn-edit, .btn-delete {
+    .btn-confirm {
       margin-top: 10px;
+      background-color: #39bfc2;
+    }
+    .btn-confirm:hover {
+      margin-top: 10px;
+      background-color: #39c287;
     }
   </style>
 </head>
@@ -53,10 +56,11 @@
         <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
           Config.
         </button>
-        <ul class="dropdown-menu">
-          <li>Nome: <%= user.nome_usuario %></li>
-          <li>E-mail: <%= user.email %></li>
-          <li></li>
+        <ul class="config dropdown-menu">
+          <li><a class="dropdown-item" href="#" aria-disabled="true">Nome: <%= user.nome_usuario %></a></li>
+          <li><a class="dropdown-item" href="#" aria-disabled="true">E-mail: <%= user.email %></a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="/alterarSenha">Alterar senha</a></li>
         </ul>
       </div>
       <h2>Minha Terapia</h2>
@@ -69,34 +73,49 @@
 </div>
 
 <main class="py-5">
-  <div class="mt-5 pt-5 text-center container">
-    <div id="width-card-lembrete" class="position-relative text-center text-muted">
-      <h1 class="text-body-emphasis">Seus lembretes</h1>
-    <% 
-      // Ordenar os lembretes pelo horário
-      lembretes.sort((a, b) => {
-        return new Date('1970/01/01 ' + a.horario) - new Date('1970/01/01 ' + b.horario);
-      }); %>
+  <div class="mt-5 pt-2 mb-5 text-center text-muted container d-flex flex-column">
+    <h1 class="text-body-emphasis">Seus lembretes</h1>
+    <div class="row">
+      <%
+        const lembretesConsolidados = [];
+        
+        // Consolidar lembretes com horários separados
+        lembretes.forEach(lembrete => {
+          if (lembrete.frequencia === 'Uma vez ao dia') {
+            lembretesConsolidados.push({ horario: lembrete.horario1, nome_medicamento: lembrete.nome_medicamento });
+          } else if (lembrete.frequencia === 'Duas vezes ao dia') {
+            lembretesConsolidados.push({ horario: lembrete.horario1, nome_medicamento: lembrete.nome_medicamento });
+            lembretesConsolidados.push({ horario: lembrete.horario2, nome_medicamento: lembrete.nome_medicamento });
+          }
+        });
 
-      <% if (lembretes.length > 0) { %>
-          <ul class="list-group">
-            <% lembretes.forEach((lembrete) => { %>
-              <li class="list-group-item card">
-                <div class="card-header">
+        // Ordenar os lembretes pelo horário
+        lembretesConsolidados.sort((a, b) => {
+          return new Date('1970/01/01 ' + a.horario) - new Date('1970/01/01 ' + b.horario);
+        });
+      %>
+
+      <% if (lembretesConsolidados.length > 0) { %>
+          <% lembretesConsolidados.forEach((lembrete) => { %>
+            <div class="col-md-6 col-lg-12 col-sm-6">
+              <div class="card">
+                <div class="card-header" data-horario="<%= lembrete.horario %>">
                   <%= lembrete.horario %>
                 </div>
                 <div class="card-body">
                   <p><strong>Medicamento:</strong> <%= lembrete.nome_medicamento %></p>
                 </div>
-              </li>
-      <% }) %>
-    </ul>
-    <% } else { %>
-      <p>Nenhum registro encontrado.</p>
-    <% } %>
-
+                <div class="card-footer">
+                  <button class="btn btn-confirm w-100">Confirmar</button>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+      <% } else { %>
+        <p>Nenhum registro encontrado.</p>
+      <% } %>
+    </div>
   </div>
-</div>
 </main>
 
 <footer class="border-bottom py-3 fixed-bottom text-center">
@@ -114,7 +133,65 @@
 </footer>
 
 <script>
-  const lembretes = JSON.stringify(lembretes);
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('Service Worker registrado com escopo:', registration.scope);
+      }).catch(error => {
+        console.log('Falha no registro do Service Worker:', error);
+      });
+  }
+
+  function requestNotificationPermission() {
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          console.log('Permissão para notificações concedida.');
+          setAlarms();
+        }
+      });
+    } else {
+      setAlarms();
+    }
+  }
+
+  function setAlarms() {
+    const cards = document.querySelectorAll('.card-header');
+    cards.forEach(card => {
+      const horario = card.getAttribute('data-horario');
+      const medicamento = card.nextElementSibling.querySelector('p').textContent.split(': ')[1];
+
+      const [hours, minutes] = horario.split(':').map(Number);
+      const now = new Date();
+      let alarmTime = new Date();
+      alarmTime.setHours(hours, minutes, 0, 0);
+
+      if (alarmTime <= now) {
+        alarmTime.setDate(alarmTime.getDate() + 1);
+      }
+
+      const timeToAlarm = alarmTime.getTime() - now.getTime();
+
+      setTimeout(() => {
+        notifyUser(medicamento);
+      }, timeToAlarm);
+    });
+  }
+
+  function notifyUser(medicamento) {
+    if (Notification.permission === 'granted') {
+      navigator.serviceWorker.ready.then(function(registration) {
+        registration.showNotification('Lembrete de Medicamento', {
+          body: `Está na hora de tomar o seu medicamento: ${medicamento}`,
+          data: {
+            medicamento: medicamento
+          }
+        });
+      });
+    }
+  }
+
+  requestNotificationPermission();
 </script>
 <script src="scripts.js"></script>
 

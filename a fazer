@@ -1,53 +1,10 @@
-addLembrete:
+tratamento.ejs
+- colocar o terceiro horário e o estoque nos card 
 
-- na pesquisa dos medicamentos, colocar eles dentro de uma div limitada em que o ususário possar dar um scrolldown. Assim a lista de medicamentos não ocupará toda a tela.
+hoje.ejs 
+- configurar o terceiro horário nos cards
+- botão confirmar com a diminuição do estoque
+- criar aviso para o quase terminon do estoque
 
-- se o usuário marcar a opção duas vezes na semana, deve aparecer  outra opção de horário e outra de dose para a segunda vez do dia.
-
-- se o usuário marcar sob demanda, os campos de horário e dose não precisam aparecer
-
-- ou seja, apenas no campo "uma vez ao dia" deve-se aparecer esses campos (uma vez)
-
-- quando não houver nenhum medicamento correspondente a pesquisa avisar com uma mensagemn
-
-- verificar se o arquivos /routes/lembretes.js é necessário, pois não tem nenhum conteúdo
-
-- +addInventario - quando o usuário clica no botão de voltar para a página addLembrete, ela não está mais com as informações salvas. E elas devem ficar salvas
-
-videos gravação:
-
-- avisar que alterou o banco de dados.
-
-sign in e sign up:
-
-história do usuário: 
-
-- tirar gênero e nacionalidade do registro
-
-footer main codigo com modificações:
-
-<footer class="text-center">
-  <div class="row align-items-center">
-    <div class="col nav-item">
-      <% if (hasInfoHoje == true) { %>
-        <a href="/hoje" class="nav-link">Hoje</a>
-      <% } else { %>
-        <a href="/inicioHoje" class="nav-link">Hoje</a>
-      <% } %>
-    </div>
-    <div class="col nav-item">
-      <% if (hasInfoSuporte == true) { %>
-        <a href="/suporte" class="nav-link">Suporte</a>
-      <% } else { %>
-        <a href="/inicioSuporte" class="nav-link">Suporte</a>
-      <% } %>
-    </div>
-    <div class="col nav-item">
-      <% if (hasInfoTratamento == true) { %>
-        <a href="/tratamento" class="nav-link">Tratamento</a>
-      <% } else { %>
-        <a href="/inicioTratamento" class="nav-link">Tratamento</a>
-      <% } %>
-    </div>
-  </div>
-</footer>
+progresso.ejs 
+- criar e config a página

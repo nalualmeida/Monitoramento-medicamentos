@@ -1,88 +1,223 @@
 <!DOCTYPE html>
 <html lang="pt">
-
 <head>
     <link rel="stylesheet" href="style.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adicionar Lembrete</title>
     <style>
-      body {
-        background-color: #c3e1fff4;
-      }
+        body {
+            background-color: #c3e1fff4;
+        }
+        .form-check-input {
+            background-color: #d6eae2;
+        }
+        .disabled-section {
+            opacity: 0.5;
+            pointer-events: none;
+        }
     </style>
 </head>
-
 <body>
-  <div class="container">
-
-<header class="border-bottom py-3 fixed-top">
-  <div class="row flex-nowrap justify-content-between align-items-center">
-    <div class="text-center">
-      <a class="blog-header-logo text-white text-decoration-none" href="/tratamento"><h2>Novo lembrete</h2></a>
-    </div>
-  </div>
-</header>
-
-<main class="mt-5 py-5">
-
-<form class="form" action="/addLembrete" method="post">
-    <div class="mt-2 form-group text-center">
-    <h4 class="form-heading">Nome do medicamento:</h4>
-    <input class="form-control" type="text" id="searchMedicamento" name="nome_medicamento" placeholder="Digite o nome do medicamento" oninput="searchMedicamentos()" type="search" aria-controls="docsearch-list" aria-label="Search" required="">
-    <ul type="hidden" id="resultadosPesquisa"></ul>
-    </div>
-
-    <div class="form-group text-center">
-        <label for="frequencia" class="form-label"><h4 class="form-heading">Com que frequência você toma este medicamento?</h4></label>
-        <select class="form-select" id="frequencia" name="frequencia" required="">
-            <option value="Uma vez ao dia">Uma vez ao dia</option>
-            <option value="Duas vezes ao dia">Duas vezes ao dia</option>
-            <option value="Sob demanda">Sob demanda (lembrete não é necessário)</option>
-        </select>
-    </div>
-    
-    <div class="form-group text-center">
-        <h4 class="form-heading">Quando você gostaria de ser lembrado?</h4>
-            <div class="d-flex flex-column container">
-                <input class="form-select" type="time" id="horario" name="horario" required>
+    <div class="container">
+        <header class="border-bottom py-3 fixed-top">
+            <div class="row flex-nowrap justify-content-between align-items-center">
+                <div class="text-center">
+                    <a class="blog-header-logo text-white text-decoration-none" href="/tratamento"><h2>Novo lembrete</h2></a>
+                </div>
             </div>
-    </div>
+        </header>
+        <main class="mt-5 py-5">
+            <form class="form" action="/addLembrete" method="post">
+                <div class="mt-2 form-group text-center">
+                    <h4 class="form-heading">Nome do medicamento:</h4>
+                    <input class="form-control" type="text" id="searchMedicamento" name="nome_medicamento" placeholder="Digite o nome do medicamento" oninput="searchMedicamentos()" type="search" aria-controls="docsearch-list" aria-label="Search" required="">
+                    <ul type="hidden" id="resultadosPesquisa"></ul>
+                </div>
 
-    <div class="form-group text-center">
-        <h4 class="form-heading">Quantas doses você deve tomar?</h4>
-            <div class="d-flex flex-column container">
+                <div class="form-group text-center">
+                    <label for="frequencia" class="form-label"><h4 class="form-heading">Com que frequência você toma este medicamento?</h4></label>
+                    <select class="form-select" id="frequencia" name="frequencia" onchange="updateTimeInputs()" required="">
+                        <option value="Uma vez ao dia">Uma vez ao dia</option>
+                        <option value="Duas vezes ao dia">Duas vezes ao dia</option>
+                        <option value="Três vezes ao dia">Três vezes ao dia</option>
+                        <option value="Sob demanda">Sob demanda (lembrete não é necessário)</option>
+                    </select>
+                </div>
+                
+                <div id="time-inputs" class="form-group text-center"></div>
+
+                <div id="dose-input" class="form-group text-center">
+                    <h4 class="form-heading">Quantas doses você deve tomar?</h4>
+                    <div class="d-flex flex-column container">
                         <div class="dropdown">
-                            <select class=" form-select" id="dose" name="dose">
+                            <select class="form-select" id="dose" name="dose">
+                                <option value="">Selecione uma opção</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
                                 <option value="4">4</option>
                                 <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
                             </select>
                         </div>
-            </div>
+                    </div>
+                </div>
 
-        </div>
-  
-    <div class="container">
-        <footer class="border-bottom py-2 fixed-bottom text-center">
-        <div class="row align-items-center">
-          <button id="formAddLembrete" class="btn w-100 text-white" type="submit">Salvar</button>
-        </div>
-      </footer>
+                <div id="repor-estoque" class="mb-2 pb-3 form-group text-center">
+                    <div class="gap-2 mb-2 d-flex flex-row align-items-center justify-content-center">
+                        <div class="form-check form-switch form-heading">
+                            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked onchange="toggleStockReminder()">
+                        </div>
+                        <h4 id="estoque-heading" class="d-flex align-items-center form-heading">Deseja ser lembrado de repor o estoque do medicamento? </h4>
+                    </div>                        
+                    <div id="stock-inputs">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Estoque atual</span>
+                            <input type="number" id="estoque" name="estoque" class="form-control" placeholder="Adicione uma quantidade" value="">
+                            <span class="input-group-text">
+                                <div class="dropdown">
+                                    <select class="form-select" id="estoque-unidade" name="estoque-unidade" onchange="syncUnits()">
+                                        <option value="">Selecione uma opção</option>
+                                        <option value="Comprimido(s)">Comprimido(s)</option>
+                                        <option value="Cápsulas(s)">Cápsulas(s)</option>
+                                        <option value="Dose(s)">Dose(s)</option>
+                                        <option value="Injeção(ões)">Injeção(ões)</option>
+                                        <option value="Aplicação(ões)">Aplicação(ões)</option>
+                                        <option value="ml(s)">ml(s)</option>
+                                    </select>
+                                </div>
+                            </span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Avisar quando tiver</span>
+                            <input type="number" id="aviso_estoque" name="aviso_estoque" class="form-control" placeholder="Adicione uma quantidade" value="">
+                            <span class="input-group-text">
+                                <div class="dropdown">
+                                    <select class="form-select" id="aviso-unidade" name="aviso-unidade" disabled>
+                                        <option value="">Selecione uma opção</option>
+                                        <option value="Comprimido(s)">Comprimido(s)</option>
+                                        <option value="Cápsulas(s)">Cápsulas(s)</option>
+                                        <option value="Dose(s)">Dose(s)</option>
+                                        <option value="Injeção(ões)">Injeção(ões)</option>
+                                        <option value="Aplicação(ões)">Aplicação(ões)</option>
+                                        <option value="ml(s)">ml(s)</option>
+                                    </select>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container">
+                    <footer class="border-bottom py-2 fixed-bottom text-center">
+                        <div class="row align-items-center">
+                            <button id="formAddLembrete" class="btn w-100 text-white" type="submit">Salvar</button>
+                        </div>
+                    </footer>
+                </div>
+            </form>
+        </main>
     </div>
-</form>
+    <script>
+        function updateTimeInputs() {
+            const frequency = document.getElementById("frequencia").value;
+            const timeInputs = document.getElementById("time-inputs");
+            const doseInput = document.getElementById("dose-input");
+            const reporEstoque = document.getElementById("repor-estoque");
+            timeInputs.innerHTML = '';  // Limpar inputs de horário
+
+            if (frequency === "Uma vez ao dia") {
+                timeInputs.innerHTML = `
+                    <h4 class="form-heading">Quando você gostaria de ser lembrado?</h4>
+                    <div class="d-flex flex-column container">
+                        <input class="form-select" type="time" id="horario1" name="horario1" required>
+                    </div>
+                `;
+                doseInput.style.display = 'block';
+                reporEstoque.style.display = 'block';
+            } else if (frequency === "Duas vezes ao dia") {
+                timeInputs.innerHTML = `
+                    <h4 class="form-heading">Quando você gostaria de ser lembrado?</h4>
+                    <div class="d-flex flex-column container">
+                        <label for="horario1">Primeiro Horário:</label>
+                        <input class="form-select" type="time" id="horario1" name="horario1" required>
+                        <label for="horario2">Segundo Horário:</label>
+                        <input class="form-select" type="time" id="horario2" name="horario2" required>
+                    </div>
+                `;
+                doseInput.style.display = 'block';
+                reporEstoque.style.display = 'block';
+            } else if (frequency === "Três vezes ao dia") {
+                timeInputs.innerHTML = `
+                    <h4 class="form-heading">Quando você gostaria de ser lembrado?</h4>
+                    <div class="d-flex flex-column container">
+                        <label for="horario1">Primeiro Horário:</label>
+                        <input class="form-select" type="time" id="horario1" name="horario1" required>
+                        <label for="horario2">Segundo Horário:</label>
+                        <input class="form-select" type="time" id="horario2" name="horario2" required>
+                        <label for="horario3">Terceiro Horário:</label>
+                        <input class="form-select" type="time" id="horario3" name="horario3" required>
+                    </div>
+                `;
+                doseInput.style.display = 'block';
+                reporEstoque.style.display = 'block';
+            } else {
+                timeInputs.innerHTML = '';
+                doseInput.style.display = 'none';
+                reporEstoque.style.display = 'none';
+            }
+        }
+
+        function toggleStockReminder() {
+            const checkbox = document.getElementById("flexSwitchCheckChecked");
+            const estoqueInput = document.getElementById("estoque");
+            const avisoEstoqueInput = document.getElementById("aviso_estoque");
+            const estoqueUnidadeSelect = document.getElementById("estoque-unidade");
+            const avisoUnidadeSelect = document.getElementById("aviso-unidade");
+            const estoqueHeading = document.getElementById("estoque-heading");
+            const stockInputs = document.getElementById("stock-inputs");
+
+            if (checkbox.checked) {
+                estoqueHeading.style.opacity = "1";
+                stockInputs.classList.remove("disabled-section");
+                const inputs = stockInputs.querySelectorAll("input, select");
+                inputs.forEach(input => {
+                    input.disabled = false;
+                });
+                avisoUnidadeSelect.disabled = true;
+            } else {
+                estoqueHeading.style.opacity = "0.5";
+                stockInputs.classList.add("disabled-section");
+                const inputs = stockInputs.querySelectorAll("input, select");
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    input.value = ""; // Limpar os valores dos inputs
+                });
+                avisoUnidadeSelect.disabled = true;
+            }
+        }
 
 
-</main>
-</div>
+        function syncUnits() {
+            const estoqueUnidade = document.getElementById("estoque-unidade").value;
+            const avisoUnidade = document.getElementById("aviso-unidade");
+            avisoUnidade.value = estoqueUnidade;
+        }
 
-
-<script src="scripts.js"></script>
-  
+        window.onload = function() {
+            updateTimeInputs();
+            toggleStockReminder();
+        };
+    </script>
+    <script src="scripts.js"></script>
 </body>
 </html>
+

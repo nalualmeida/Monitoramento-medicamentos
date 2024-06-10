@@ -90,40 +90,6 @@ document.getElementById('formAddLembrete').addEventListener('submit', function(e
 
 // ALERTA LEMBRETES
 
-document.addEventListener("DOMContentLoaded", () => {
-    // Solicita permissão para notificações, se ainda não tiver sido concedida
-    if (Notification.permission !== "granted") {
-      Notification.requestPermission().then(permission => {
-        if (permission !== "granted") {
-          alert("Permita notificações para receber lembretes dos medicamentos.");
-        }
-      });
-    }
 
-    console.log("Lembretes carregados:", lembretes);
-  
-    function checkAlarms() {
-      const now = new Date();
-      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-      console.log("Hora atual:", currentTime);
-  
-      lembretes.forEach(lembrete => {
-        console.log("Verificando lembrete:", lembrete);
-        if (lembrete.horario === currentTime) {
-            console.log("Alarme disparado para:", lembrete);
-          // Enviar notificação
-          if (Notification.permission === "granted") {
-            new Notification("Lembrete de Medicamento", {
-              body: `Hora de tomar o medicamento: ${lembrete.nome_medicamento}`,
-            });
-          } else {
-            alert(`Hora de tomar o medicamento: ${lembrete.nome_medicamento}`);
-          }
-        }
-      });
-    }
-  
-    setInterval(checkAlarms, 60000);
-    checkAlarms();
-  });
+
   

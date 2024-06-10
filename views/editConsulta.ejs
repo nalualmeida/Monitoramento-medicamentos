@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Consulta</title>
+    <style>
+        html {
+    background-color: #c3e1fff4;
+   
+  }
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #c3e1fff4;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+header, footer{
+    background-color: #00a7aa;
+    color: white;
+  }
+
+  .container{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #c3e1fff4;
+  }
+  
+  main{
+    margin: 0;
+    background-color: #c3e1fff4;
+  
+  }
+
+  .footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #00a7aa;
+    border-top: 1px solid #ccc;
+    padding: 10px 0;
+  }
+  .form-heading {
+    margin-top: 20px;
+    color: #006668;
+  }
+  
+  .form-label {
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #00a7aa;
+    border-radius: 5px;
+    box-sizing: border-box;
+  }
+
+  #resultadosPesquisa {
+    margin-top: 2vh;
+    border: 4px solid #00a7aa;
+    border-radius: 9px;
+  }
+
+  #resultadosPesquisa li {
+    color: #006668;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    list-style: none
+  }
+
+  #resultadosPesquisa li:hover {
+    color: #000000;
+    font-size: large;
+  }
+    </style>
+</head>
+
+<body>
+  <div class="container">
+
+<header class="border-bottom py-3 fixed-top">
+  <div class="row flex-nowrap justify-content-between align-items-center">
+    <div class="text-center">
+      <a class="blog-header-logo text-white text-decoration-none" href="/suporte"><h2>Editar consulta</h2></a>
+    </div>
+  </div>
+</header>
+
+<main class="mt-5 py-5">
+    
+        <form id="editConsultaForm" class="form" action="/editConsulta/<%= consulta.id_consulta %>" method="post">
+          <div class="mt-2 form-group text-center">
+            <h4 class="form-heading">Especialidade:</h4>
+            <input type="text" class="form-control" name="especialidade" id="especialidade" placeholder="Especialidade do profissional" value="<%= consulta.especialidade %>" required>
+                <div class="invalid-feedback">
+                  Por favor, informar uma especialidade.
+                </div>
+          </div>
+
+          <div class="mt-2 form-group text-center">
+            <h4 class="form-heading">Anotações:</h4>
+            <input type="text" class="form-control" name="anotacoes" id="anotacoes" placeholder="Anotações" value="<%= consulta.anotacoes %>">
+          </div>
+          
+          <div class="form-group text-center">
+            <h4 class="form-heading">Data:</h4>
+                <div class="d-flex flex-column container">
+                  <input class="form-select" type="date" id="data" name="data" value="<%= consulta.data %>" required>
+                </div>
+          </div>
+          <div class="form-group text-center">
+            <h4 class="form-heading">Horário:</h4>
+                <div class="d-flex flex-column container">
+                  <input class="form-select" type="time" id="horario" name="horario" value="<%= consulta.horario %>" required>
+                </div>
+          </div>  
+          
+          <div class="container">
+            <footer class="border-bottom py-2 fixed-bottom text-center">
+            <div class="row align-items-center">
+              <button id="formAddConsulta" class="btn w-100 text-white" type="submit">Salvar alterações</button>
+            </div>
+          </footer>
+        </div>
+
+        </form>
+
+      </main>
+    </div>
+    
+    
+    <script src="scripts.js"></script>
+      
+    </body>
+    </html>

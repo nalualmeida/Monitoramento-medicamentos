@@ -26,9 +26,11 @@
     .card-header {
       font-size: 1.2em;
       font-weight: bold;
+      background-color: #39bfc2;
     }
     .card-body {
       font-size: 1em;
+      background-color: #353d3d11;
     }
     .card-footer {
       display: flex;
@@ -76,8 +78,8 @@
   </div>
 
   <main class="py-5">
-    <div class="mt-5 pt-5 mb-5 text-center container d-flex flex-column">
-      <button id="abrirModal" class="btn btn-info" type="button">Adicionar</button>
+    <div class="mt-5 pt-3 mb-5 text-center container d-flex flex-column">
+      <button id="abrirModal" class="p-3 text-black text-decoration-none btn btn-info" type="button">Adicionar</button>
       <div class="position-relative text-center text-muted w-100 d-flex flex-row">
         <div class="mt-4 container d-flex row align-items-start">
           <!-- Coluna das consultas -->
@@ -100,9 +102,15 @@
                   Especialidade: <%= consulta.especialidade %>
                 </div>
                 <div class="card-body">
-                  <p><strong>Data:</strong> <%= consulta.data %></p>
-                  <p><strong>Horário:</strong> <%= consulta.horario %></p>
-                  <p><strong>Anotação:</strong> <%= consulta.anotacoes %></p>
+                  <% if (consulta.data) { %>  
+                    <p><strong>Data:</strong> <%= consulta.data %></p>
+                  <% } %>
+                  <% if (consulta.horario) { %>
+                    <p><strong>Horário:</strong> <%= consulta.horario %></p>
+                  <% } %>
+                  <% if (consulta.anotacoes) { %>
+                    <p><strong>Anotação:</strong> <%= consulta.anotacoes %></p>
+                  <% } %>
                 </div>
                 <div class="card-footer">
                   <button class="btn btn-warning btn-edit" onclick="window.location.href='/editConsulta/<%= consulta.id_consulta %>'">Editar</button>
@@ -138,11 +146,21 @@
                   Dr(a).: <%= medico.nome_medico %>
                 </div>
                 <div class="card-body">
+                  <% if (medico.especialidade) { %>
                   <p><strong>Especialidade:</strong> <%= medico.especialidade %></p>
+                  <% } %>
+                  <% if (medico.endereco) { %>
                   <p><strong>Endereço:</strong> <%= medico.endereco %></p>
+                  <% } %>
+                  <% if (medico.numero_contato) { %>
                   <p><strong>Número para Contato:</strong> <%= medico.numero_contato %></p>
+                  <% } %>
+                  <% if (medico.email) { %>
                   <p><strong>E-mail:</strong> <%= medico.email %></p>
+                  <% } %>
+                  <% if (medico.website) { %>
                   <p><strong>Website:</strong> <%= medico.website %></p>
+                  <% } %>
                 </div>
                 <div class="card-footer">
                   <button class="btn btn-warning btn-edit" onclick="window.location.href='/editMedico/<%= medico.id_medico %>'">Editar</button>

@@ -119,6 +119,66 @@ app.get("/logout", (req, res) => {
   });
 });
 
+app.get("/alterarSenha", requireAuth, async (req, res) => {
+  const userId = req.session.userId;
+
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  try {
+    const user = await dbGet('SELECT nome_usuario, email FROM users WHERE email = ?', [userId]);
+    console.log(user)
+
+    if (!user) {
+      return res.redirect("/login");
+    }
+
+    res.render("alterarSenha", { user: user });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post("/alterarSenha/:email", async (req, res) => {
+  const userId = req.session.userId;
+  const emailId = req.params.email;
+  const { senha, nova_senha } = req.body;
+
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(nova_senha, 10);
+    const user = await dbGet(
+      "SELECT * FROM users WHERE email = ?",
+      [emailId]
+    );
+    console.log("Usuário encontrado:", user)
+
+    if (user) {
+      const senhaCorreta = await bcrypt.compare(senha, user.senha);
+      if (senhaCorreta) {
+        await dbRun(
+          `UPDATE users SET senha = ? WHERE email = ?`,
+          [hashedPassword, emailId]
+        );
+
+        res.redirect("/hoje");
+      } else {
+        res.send("Senha incorreta");
+      }
+    } else {
+      res.status(404).send("Usuário não encontrado");
+    }
+  } catch (err) {
+    console.error("Erro ao obter usuário:", err.message);
+    res.status(500).send("Erro ao carregar a página");
+  }
+});
+
 app.get("/inicioHoje", requireAuth, (req, res) => {
   res.render("inicioHoje.ejs");
 });
@@ -148,6 +208,10 @@ app.get('/hoje', requireAuth, async (req, res) => {
       console.error("Erro ao obter lembretes:", err.message);
       res.status(500).send("Erro ao carregar a página");
   }
+});
+
+app.get("/alarme", requireAuth, (req, res) => {
+  res.render("alarme.ejs");
 });
 
 app.get("/inicioProgresso", requireAuth, (req, res) => {
@@ -219,6 +283,60 @@ app.post("/addConsulta", requireAuth, async (req, res) => {
     
     });
 
+    app.get("/editConsulta", requireAuth, (req, res) => {
+      res.render("editConsulta.ejs");
+    });
+    
+    app.get("/editConsulta/:id", async (req, res) => {
+      const userId = req.session.userId;
+      const consultaId = req.params.id;
+    
+      if (!userId) {
+        return res.redirect("/login");
+      }
+    
+      try {
+        const consulta = await dbGet(
+          "SELECT * FROM consultas WHERE id_consulta = ?",
+          [consultaId]
+        );
+        console.log("Consulta encontrada:", consulta)
+    
+        if (consulta) {
+          res.render("editConsulta", { consulta });
+        } else {
+          res.status(404).send("Consulta não encontrado");
+        }
+      } catch (err) {
+        console.error("Erro ao obter consulta:", err.message);
+        res.status(500).send("Erro ao carregar a página de edição");
+      }
+    });
+    
+    // Rota para processar a edição
+    app.post("/editConsulta/:id", requireAuth, async (req, res) => {
+      const { especialidade, anotacoes, data, horario } = req.body;
+      const userId = req.session.userId;
+      const consultaId = req.params.id;
+    
+      if (!userId) {
+        return res.status(401).send('Usuário não autenticado');
+      }
+    
+      try {
+        await dbRun(
+          `UPDATE consultas SET especialidade = ?, anotacoes = ?, data = ?, horario = ? WHERE id_consulta = ?`,
+          [especialidade, anotacoes, data, horario, consultaId]
+        );               
+    
+        res.redirect("/suporte");
+      } catch (err) {
+        console.error("Erro ao editar consulta:", err.message);
+        res.status(500).send("Erro ao editar o consulta");
+      }
+    });
+    
+
 app.post("/deleteConsulta/:id", async (req, res) => {
   const userId = req.session.userId;
   const consultaId = req.params.id;
@@ -268,6 +386,59 @@ app.post("/addMedico", requireAuth, async (req, res) => {
     res.status(500).send('Erro ao salvar médico');
   }
     
+    });
+
+    app.get("/editMedico", requireAuth, (req, res) => {
+      res.render("editMedico.ejs");
+    });
+    
+    app.get("/editMedico/:id", async (req, res) => {
+      const userId = req.session.userId;
+      const medicoId = req.params.id;
+    
+      if (!userId) {
+        return res.redirect("/login");
+      }
+    
+      try {
+        const medico = await dbGet(
+          "SELECT * FROM medicos WHERE id_medico = ?",
+          [medicoId]
+        );
+        console.log("Médico encontrado:", medico)
+    
+        if (medico) {
+          res.render("editMedico", { medico });
+        } else {
+          res.status(404).send("Médico não encontrado");
+        }
+      } catch (err) {
+        console.error("Erro ao obter médico:", err.message);
+        res.status(500).send("Erro ao carregar a página de edição");
+      }
+    });
+    
+    // Rota para processar a edição
+    app.post("/editMedico/:id", requireAuth, async (req, res) => {
+      const { nome_medico, especialidade, endereco, numero_contato, email, website } = req.body;
+      const userId = req.session.userId;
+      const medicoId = req.params.id;
+    
+      if (!userId) {
+        return res.status(401).send('Usuário não autenticado');
+      }
+    
+      try {
+        await dbRun(
+          `UPDATE medicos SET nome_medico = ?, especialidade = ?, endereco = ?, numero_contato = ?, email = ?, website = ? WHERE id_medico = ?`,
+          [nome_medico, especialidade, endereco, numero_contato, email, website, medicoId]
+        );               
+    
+        res.redirect("/suporte");
+      } catch (err) {
+        console.error("Erro ao editar médico:", err.message);
+        res.status(500).send("Erro ao editar o médico");
+      }
     });
 
 app.post("/deleteMedico/:id", async (req, res) => {
@@ -331,26 +502,113 @@ app.get('/addLembrete', requireAuth, (req, res) => {
       res.render('addLembrete');
     });
 
-app.post("/addLembrete", requireAuth, async (req, res) => {
-      const { nome_medicamento, frequencia, horario, dose } = req.body;
+    app.post("/addLembrete", async (req, res) => {
+      const { 
+          nome_medicamento, 
+          frequencia, 
+          horario1, 
+          horario2,
+          horario3,
+          dose,
+          estoque,
+          aviso_estoque 
+      } = req.body;
       const userId = req.session.userId;
+  
+      if (!userId) {
+          return res.status(401).send('Usuário não autenticado');
+      }
+  
+      try {
+          // Calcula os valores para estoque e aviso_estoque
+          let estoqueValue = estoque + ' ' + req.body['estoque-unidade'];
+          let avisoEstoqueValue = aviso_estoque + ' ' + req.body['estoque-unidade'];
+  
+          let sql = 'INSERT INTO lembretes (id_usuario, nome_medicamento, frequencia, horario1, horario2, horario3, dose, estoque, aviso_estoque) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          let params = [userId, nome_medicamento, frequencia, null, null, null, dose, estoqueValue, avisoEstoqueValue];
+  
+          if (frequencia === 'Uma vez ao dia') {
+              params[3] = horario1;
+          } else if (frequencia === 'Duas vezes ao dia') {
+              params[3] = horario1;
+              params[4] = horario2;
+          } else if (frequencia === 'Três vezes ao dia') {
+            params[3] = horario1;
+            params[4] = horario2;
+            params[5] = horario3;
+        }
+  
+          await dbRun(sql, params);
+          res.redirect("/tratamento");
+      } catch (err) {
+          console.error('Erro ao salvar lembrete:', err.message);
+          res.status(500).send('Erro ao salvar lembrete');
+      }
+  });
+  
 
-  if (!userId) {
-    return res.status(401).send('Usuário não autenticado');
-  }
-
-  try {
-    await dbRun(
-      `INSERT INTO lembretes (id_usuario, nome_medicamento, frequencia, horario, dose) VALUES (?, ?, ?, ?, ?)`,
-            [userId, nome_medicamento, frequencia, horario, dose]
-    );
-    res.redirect("/tratamento");
-  } catch (err) {
-    console.error('Erro ao salvar lembrete:', err.message);
-    res.status(500).send('Erro ao salvar lembrete');
-  }
-    
-    });
+  app.get("/editLembrete", requireAuth, (req, res) => {
+    res.render("editLembrete.ejs");
+  });
+  
+  app.get("/editLembrete/:id", async (req, res) => {
+    console.log("A rota /editLembrete/:id foi acessada."); 
+    const userId = req.session.userId;
+    const lembreteId = req.params.id;
+  
+    if (!userId) {
+      return res.redirect("/login");
+    }
+  
+    try {
+      const lembrete = await dbGet(
+        "SELECT * FROM lembretes WHERE id_lembrete = ?",
+        [lembreteId]
+      );
+      console.log("Lembrete encontrado:", lembrete)
+  
+      if (lembrete) {
+        res.render("editLembrete", { lembrete });
+      } else {
+        res.status(404).send("Lembrete não encontrado");
+      }
+    } catch (err) {
+      console.error("Erro ao obter lembrete:", err.message);
+      res.status(500).send("Erro ao carregar a página de edição");
+    }
+  });
+  
+  // Rota para processar a edição
+  app.post("/editLembrete/:id", requireAuth, async (req, res) => {
+    const { nome_medicamento, frequencia, horario1, horario2, dose } = req.body;
+    const userId = req.session.userId;
+    const lembreteId = req.params.id;
+  
+    console.log('Dados recebidos:', { nome_medicamento, frequencia, horario1, horario2, dose });
+  
+    if (!userId) {
+      return res.status(401).send('Usuário não autenticado');
+    }
+  
+    try {
+      let sql = `UPDATE lembretes SET nome_medicamento = ?, frequencia = ?, horario1 = ?, horario2 = ?, dose = ? WHERE id_lembrete = ?`
+          let params = [nome_medicamento, frequencia, null, null, dose, lembreteId];
+          
+          if (frequencia === 'Uma vez ao dia') {
+              params[2] = horario1;
+          } else if (frequencia === 'Duas vezes ao dia') {
+              params[2] = horario1;
+              params[3] = horario2;
+          }
+          
+          await dbRun(sql, params);
+  
+      res.redirect("/tratamento");
+    } catch (err) {
+      console.error("Erro ao editar lembrete:", err.message);
+      res.status(500).send("Erro ao editar o lembrete");
+    }
+  });
     
     app.post("/deleteLembrete/:id", async (req, res) => {
       const userId = req.session.userId;

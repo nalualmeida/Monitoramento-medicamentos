@@ -89,7 +89,8 @@ header, footer{
     color: #006668;
     margin-top: 2px;
     margin-bottom: 2px;
-    list-style: none
+    list-style: none;
+    cursor: pointer;
   }
 
   #resultadosPesquisa li:hover {
