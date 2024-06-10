@@ -187,31 +187,96 @@ app.get("/inicioHoje", (req, res) => {
   res.sendFile(__dirname + "/inicioHoje.ejs");
   });
 
-app.get('/hoje', requireAuth, async (req, res) => {
-  const userId = req.session.userId;
-  const user = await dbGet('SELECT nome_usuario, email FROM users WHERE email = ?', [userId]);
-  if (!userId) {
-      return res.redirect("/login");
-  }
-  try {
-    const lembretes = await dbAll(
-      "SELECT * FROM lembretes WHERE id_usuario = ?",
-      [userId]
-    );
-
+  app.get('/hoje', requireAuth, async (req, res) => {
+    const userId = req.session.userId;
+    const user = await dbGet('SELECT nome_usuario, email FROM users WHERE email = ?', [userId]);
+    if (!userId) {
+        return res.redirect("/login");
+    }
+    try {
+      const lembretes = await dbAll(
+        "SELECT * FROM lembretes WHERE id_usuario = ?",
+        [userId]
+      );
+  
+      console.log('Lembretes:', lembretes); // Adicione este log para verificar os dados
+  
       if (lembretes.length > 0) {
           res.render("hoje", { user: user, lembretes: lembretes });
       } else {
           res.render("inicioHoje");
       }
-  } catch (err) {
-      console.error("Erro ao obter lembretes:", err.message);
-      res.status(500).send("Erro ao carregar a página");
-  }
-});
+    } catch (err) {
+        console.error("Erro ao obter lembretes:", err.message);
+        res.status(500).send("Erro ao carregar a página");
+    }
+  });
 
 app.get("/alarme", requireAuth, (req, res) => {
   res.render("alarme.ejs");
+});
+
+app.post('/confirmarMedicamento/:id', async (req, res) => {
+  const id_lembrete = req.params.id;
+
+  try {
+    const lembrete = await dbGet("SELECT * FROM lembretes WHERE id_lembrete = ?", [id_lembrete]);
+
+    if (lembrete) {
+      // Extrair o valor numérico e a unidade de medida do estoque
+      const estoqueAtual = parseInt(lembrete.estoque);
+      const medida = lembrete.estoque.replace(/[0-9]/g, '').trim();
+
+      if (estoqueAtual > 0) {
+        const novoEstoque = (estoqueAtual - 1) + ' ' + medida;
+
+        await dbRun('UPDATE lembretes SET estoque = ? WHERE id_lembrete = ?', [novoEstoque, lembrete.id_lembrete]);
+        res.status(200).json({ success: true, message: 'Estoque atualizado com sucesso' });
+      } else {
+        res.status(400).json({ success: false, message: 'Estoque insuficiente' });
+      }
+    } else {
+      res.status(404).json({ success: false, message: 'Lembrete não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao confirmar o medicamento:', error.message);
+    res.status(500).json({ success: false, message: 'Erro ao confirmar o medicamento' });
+  }
+});
+
+app.post('/resetCards', async (req, res) => {
+  const userId = req.session.userId;
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  try {
+    await dbRun("INSERT INTO reset_cards (id_usuario) VALUES (?)", [userId]);
+    res.status(200).json({ success: true, message: 'Cards resetados com sucesso' });
+  } catch (error) {
+    console.error('Erro ao resetar os cards:', error.message);
+    res.status(500).json({ success: false, message: 'Erro ao resetar os cards' });
+  }
+});
+
+app.get('/getLastResetTime', async (req, res) => {
+  const userId = req.session.userId;
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  try {
+    const lastReset = await dbGet("SELECT last_reset FROM reset_cards WHERE id_usuario = ? ORDER BY id_reset DESC LIMIT 1", [userId]);
+
+    if (lastReset) {
+      res.json({ success: true, lastResetTime: lastReset.last_reset });
+    } else {
+      res.json({ success: false, message: 'Nenhum registro de reset encontrado para este usuário' });
+    }
+  } catch (error) {
+    console.error('Erro ao obter a última data/hora de reset dos cards:', error.message);
+    res.status(500).json({ success: false, message: 'Erro ao obter a última data/hora de reset dos cards' });
+  }
 });
 
 app.get("/inicioProgresso", requireAuth, (req, res) => {
@@ -503,26 +568,25 @@ app.get('/addLembrete', requireAuth, (req, res) => {
     });
 
     app.post("/addLembrete", async (req, res) => {
-      const { 
-          nome_medicamento, 
-          frequencia, 
-          horario1, 
-          horario2,
-          horario3,
-          dose,
-          estoque,
-          aviso_estoque 
-      } = req.body;
+      const { nome_medicamento, frequencia, horario1, horario2, horario3, dose, estoque, aviso_estoque, 'estoque-unidade': estoqueUnidade } = req.body;
       const userId = req.session.userId;
   
       if (!userId) {
           return res.status(401).send('Usuário não autenticado');
       }
   
+      const existingRecord = await dbGet(
+          "SELECT * FROM lembretes WHERE id_usuario = ? AND nome_medicamento = ?",
+          [userId, nome_medicamento]
+      );
+  
+      if (existingRecord) {
+          return res.status(400).send("Já existe um registro para este medicamento.");
+      }
+  
       try {
-          // Calcula os valores para estoque e aviso_estoque
-          let estoqueValue = estoque + ' ' + req.body['estoque-unidade'];
-          let avisoEstoqueValue = aviso_estoque + ' ' + req.body['estoque-unidade'];
+          let estoqueValue = estoque && estoqueUnidade ? `${estoque} ${estoqueUnidade}` : null;
+          let avisoEstoqueValue = aviso_estoque && estoqueUnidade ? `${aviso_estoque} ${estoqueUnidade}` : null;
   
           let sql = 'INSERT INTO lembretes (id_usuario, nome_medicamento, frequencia, horario1, horario2, horario3, dose, estoque, aviso_estoque) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
           let params = [userId, nome_medicamento, frequencia, null, null, null, dose, estoqueValue, avisoEstoqueValue];
@@ -533,10 +597,10 @@ app.get('/addLembrete', requireAuth, (req, res) => {
               params[3] = horario1;
               params[4] = horario2;
           } else if (frequencia === 'Três vezes ao dia') {
-            params[3] = horario1;
-            params[4] = horario2;
-            params[5] = horario3;
-        }
+              params[3] = horario1;
+              params[4] = horario2;
+              params[5] = horario3;
+          }
   
           await dbRun(sql, params);
           res.redirect("/tratamento");
@@ -545,7 +609,7 @@ app.get('/addLembrete', requireAuth, (req, res) => {
           res.status(500).send('Erro ao salvar lembrete');
       }
   });
-  
+   
 
   app.get("/editLembrete", requireAuth, (req, res) => {
     res.render("editLembrete.ejs");
@@ -562,44 +626,74 @@ app.get('/addLembrete', requireAuth, (req, res) => {
   
     try {
       const lembrete = await dbGet(
-        "SELECT * FROM lembretes WHERE id_lembrete = ?",
-        [lembreteId]
+          "SELECT * FROM lembretes WHERE id_lembrete = ?",
+          [lembreteId]
       );
-      console.log("Lembrete encontrado:", lembrete)
+      console.log("Lembrete encontrado:", lembrete);
   
       if (lembrete) {
-        res.render("editLembrete", { lembrete });
+          // Separar estoque e aviso_estoque mesmo que sejam nulos
+          const [estoqueQuantidade, estoqueUnidade] = (lembrete.estoque || '').split(' ');
+          const [avisoEstoqueQuantidade, avisoEstoqueUnidade] = (lembrete.aviso_estoque || '').split(' ');
+  
+          // Passar valores separados para a view
+          res.render("editLembrete", {
+              lembrete: {
+                  ...lembrete,
+                  estoqueQuantidade,
+                  estoqueUnidade,
+                  avisoEstoqueQuantidade,
+                  avisoEstoqueUnidade
+              }
+          });
       } else {
-        res.status(404).send("Lembrete não encontrado");
+          res.status(404).send("Lembrete não encontrado");
       }
-    } catch (err) {
+  } catch (err) {
       console.error("Erro ao obter lembrete:", err.message);
       res.status(500).send("Erro ao carregar a página de edição");
-    }
-  });
+  }
+  });  
   
   // Rota para processar a edição
   app.post("/editLembrete/:id", requireAuth, async (req, res) => {
-    const { nome_medicamento, frequencia, horario1, horario2, dose } = req.body;
+    const { nome_medicamento, frequencia, horario1, horario2, horario3, dose, estoque, aviso_estoque } = req.body;
     const userId = req.session.userId;
     const lembreteId = req.params.id;
   
-    console.log('Dados recebidos:', { nome_medicamento, frequencia, horario1, horario2, dose });
+    console.log('Dados recebidos:', { nome_medicamento, frequencia, horario1, horario2, horario3, dose, estoque, aviso_estoque });
   
     if (!userId) {
       return res.status(401).send('Usuário não autenticado');
     }
+
+    const existingRecord = await dbGet(
+      "SELECT * FROM lembretes WHERE id_lembrete != ? AND id_usuario = ? AND nome_medicamento = ?",
+      [lembreteId, userId, nome_medicamento]
+    );
+  
+    if (existingRecord) {
+      return res.status(400).send("Já existe um registro para este medicamento");
+    }
   
     try {
-      let sql = `UPDATE lembretes SET nome_medicamento = ?, frequencia = ?, horario1 = ?, horario2 = ?, dose = ? WHERE id_lembrete = ?`
-          let params = [nome_medicamento, frequencia, null, null, dose, lembreteId];
+      // Calcula os valores para estoque e aviso_estoque
+      let estoqueValue = estoque + ' ' + req.body['estoque-unidade'];
+      let avisoEstoqueValue = aviso_estoque + ' ' + req.body['estoque-unidade']
+      
+      let sql = `UPDATE lembretes SET nome_medicamento = ?, frequencia = ?, horario1 = ?, horario2 = ?, horario3 = ?, dose = ?, estoque = ?, aviso_estoque = ? WHERE id_lembrete = ?`
+          let params = [nome_medicamento, frequencia, null, null, null, dose, estoqueValue, avisoEstoqueValue, lembreteId];
           
           if (frequencia === 'Uma vez ao dia') {
               params[2] = horario1;
           } else if (frequencia === 'Duas vezes ao dia') {
               params[2] = horario1;
               params[3] = horario2;
-          }
+          } else if (frequencia === 'Três vezes ao dia') {
+            params[2] = horario1;
+            params[3] = horario2;
+            params[4] = horario3;
+        }
           
           await dbRun(sql, params);
   

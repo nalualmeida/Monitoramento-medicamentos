@@ -64,7 +64,7 @@
       <button class="btn btn-info my-2" type="button">
         <a href="/addLembrete" class="nav-link text-black text-decoration-none">Adicionar novo lembrete</a>
       </button>
-      <div class="row">
+      <div class="gap-2 w-100 text-center container row">
 
     <% 
       // Ordenar os medicamentos por nome
@@ -73,9 +73,9 @@
       }); %>
 
       <% if (lembretes.length > 0) { %>
-          <ul class="col-md-6 col-lg-12 list-group">
+          <ul class="w-100 text-center container row">
             <% lembretes.forEach((lembrete) => { %>
-              <li class="list-group-item card">
+              <li class="list-group-item mx-3 card col-md-5 col-lg-5 col-sm-5">
                 <div class="card-header">
                   Medicamento: <%= lembrete.nome_medicamento %>
                 </div>
@@ -87,12 +87,19 @@
                       <% } else if (lembrete.frequencia === 'Duas vezes ao dia') { %>
                           <p><strong>Primeiro Horário:</strong> <%= lembrete.horario1 %></p>
                           <p><strong>Segundo Horário:</strong> <%= lembrete.horario2 %></p>
+                      <% } else if (lembrete.frequencia === 'Três vezes ao dia') { %>
+                          <p><strong>Primeiro Horário:</strong> <%= lembrete.horario1 %></p>
+                          <p><strong>Segundo Horário:</strong> <%= lembrete.horario2 %></p>
+                          <p><strong>Terceiro Horário:</strong> <%= lembrete.horario3 %></p>
                       <% } %>
                   <% } %>
                   <% if (lembrete.dose) { %>
                       <p><strong>Dose(s):</strong> <%= lembrete.dose %></p>
                   <% } %>
-              </div>
+                  <% if (lembrete.estoque) { %>
+                    <p><strong>Estoque:</strong> <%= lembrete.estoque %></p>
+                <% } %>
+                </div>
                 <div class="card-footer">
                   <button class="btn btn-warning btn-edit" onclick="window.location.href='/editLembrete/<%= lembrete.id_lembrete %>'">Editar</button>
                   <form action="/deleteLembrete/<%= lembrete.id_lembrete %>" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este lembrete?');">
@@ -100,15 +107,14 @@
                   </form>
                 </div>
               </li>
-      <% }) %>
-    </ul>
-    <% } else { %>
-      <p>Nenhum registro encontrado.</p>
-    <% } %>
-  </div>      
+            <% }); %>
+          </ul>
+      <% } else { %>
+          <p>Nenhum registro encontrado.</p>
+      <% } %>
+      </div>      
+    </div>
   </div>
-</div>
-
 </main>
 
 <footer class="border-bottom py-3 fixed-bottom text-center">

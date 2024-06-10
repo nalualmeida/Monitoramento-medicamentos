@@ -81,7 +81,7 @@
                     <div id="stock-inputs">
                         <div class="input-group mb-3">
                             <span class="input-group-text">Estoque atual</span>
-                            <input type="number" id="estoque" name="estoque" class="form-control" placeholder="Adicione uma quantidade" value="">
+                            <input type="number" min="0" id="estoque" name="estoque" class="form-control" placeholder="Adicione uma quantidade" value="">
                             <span class="input-group-text">
                                 <div class="dropdown">
                                     <select class="form-select" id="estoque-unidade" name="estoque-unidade" onchange="syncUnits()">
@@ -98,7 +98,7 @@
                         </div>
                         <div class="input-group mb-3">
                             <span class="input-group-text">Avisar quando tiver</span>
-                            <input type="number" id="aviso_estoque" name="aviso_estoque" class="form-control" placeholder="Adicione uma quantidade" value="">
+                            <input type="number" min="0" id="aviso_estoque" name="aviso_estoque" class="form-control" placeholder="Adicione uma quantidade" value="">
                             <span class="input-group-text">
                                 <div class="dropdown">
                                     <select class="form-select" id="aviso-unidade" name="aviso-unidade" disabled>
@@ -178,10 +178,6 @@
 
         function toggleStockReminder() {
             const checkbox = document.getElementById("flexSwitchCheckChecked");
-            const estoqueInput = document.getElementById("estoque");
-            const avisoEstoqueInput = document.getElementById("aviso_estoque");
-            const estoqueUnidadeSelect = document.getElementById("estoque-unidade");
-            const avisoUnidadeSelect = document.getElementById("aviso-unidade");
             const estoqueHeading = document.getElementById("estoque-heading");
             const stockInputs = document.getElementById("stock-inputs");
 
@@ -192,7 +188,7 @@
                 inputs.forEach(input => {
                     input.disabled = false;
                 });
-                avisoUnidadeSelect.disabled = true;
+                document.getElementById("aviso-unidade").disabled = true;
             } else {
                 estoqueHeading.style.opacity = "0.5";
                 stockInputs.classList.add("disabled-section");
@@ -201,16 +197,26 @@
                     input.disabled = true;
                     input.value = ""; // Limpar os valores dos inputs
                 });
-                avisoUnidadeSelect.disabled = true;
+                document.getElementById("aviso-unidade").disabled = true;
             }
         }
 
-
         function syncUnits() {
             const estoqueUnidade = document.getElementById("estoque-unidade").value;
-            const avisoUnidade = document.getElementById("aviso-unidade");
-            avisoUnidade.value = estoqueUnidade;
+            document.getElementById("aviso-unidade").value = estoqueUnidade;
         }
+
+        function clearStockInputsIfNeeded() {
+            const checkbox = document.getElementById("flexSwitchCheckChecked");
+            if (!checkbox.checked) {
+                document.getElementById("estoque").value = "";
+                document.getElementById("estoque-unidade").value = "";
+                document.getElementById("aviso_estoque").value = "";
+                document.getElementById("aviso-unidade").value = "";
+            }
+        }
+
+        document.getElementById("addLembreteForm").addEventListener("submit", clearStockInputsIfNeeded);
 
         window.onload = function() {
             updateTimeInputs();

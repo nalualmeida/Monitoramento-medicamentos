@@ -67,7 +67,6 @@ header, footer{
   .form-control {
     width: 100%;
     padding: 10px;
-    border: 1px solid #00a7aa;
     border-radius: 5px;
     box-sizing: border-box;
   }
@@ -113,6 +112,7 @@ header, footer{
                     <select class="form-select" id="frequencia" name="frequencia" onchange="updateTimeInputs()" required>
                         <option value="Uma vez ao dia" <%= lembrete.frequencia === "Uma vez ao dia" ? "selected" : "" %>>Uma vez ao dia</option>
                         <option value="Duas vezes ao dia" <%= lembrete.frequencia === "Duas vezes ao dia" ? "selected" : "" %>>Duas vezes ao dia</option>
+                        <option value="Três vezes ao dia" <%= lembrete.frequencia === "Três vezes ao dia" ? "selected" : "" %>>Três vezes ao dia</option>
                         <option value="Sob demanda" <%= lembrete.frequencia === "Sob demanda" ? "selected" : "" %>>Sob demanda (lembrete não é necessário)</option>
                     </select>
                 </div>
@@ -141,6 +141,51 @@ header, footer{
                     </div>
                 </div>
 
+                <div id="repor-estoque" class="mb-2 pb-3 form-group text-center">
+                    <div class="gap-2 mb-2 d-flex flex-row align-items-center justify-content-center">
+                        <div class="form-check form-switch form-heading">
+                            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked onchange="toggleStockReminder()">
+                        </div>
+                        <h4 id="estoque-heading" class="d-flex align-items-center form-heading">Deseja ser lembrado de repor o estoque do medicamento? </h4>
+                    </div>                        
+                    <div id="stock-inputs">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Estoque atual</span>
+                            <input type="number" min="0" id="estoque" name="estoque" class="form-control" placeholder="Adicione uma quantidade" value="<%= lembrete.estoqueQuantidade %>">
+                            <span class="input-group-text">
+                                <div class="dropdown">
+                                    <select class="form-select" id="estoque-unidade" name="estoque-unidade" onchange="syncUnits()">
+                                        <option value="">Selecione uma opção</option>
+                                        <option value="Comprimido(s)" <%= lembrete.estoqueUnidade === "Comprimido(s)" ? "selected" : "" %>>Comprimido(s)</option>
+                                        <option value="Cápsulas(s)" <%= lembrete.estoqueUnidade === "Cápsulas(s)" ? "selected" : "" %>>Cápsulas(s)</option>
+                                        <option value="Dose(s)" <%= lembrete.estoqueUnidade === "Dose(s)" ? "selected" : "" %>>Dose(s)</option>
+                                        <option value="Injeção(ões)" <%= lembrete.estoqueUnidade === "Injeção(ões)" ? "selected" : "" %>>Injeção(ões)</option>
+                                        <option value="Aplicação(ões)" <%= lembrete.estoqueUnidade === "Aplicação(ões)" ? "selected" : "" %>>Aplicação(ões)</option>
+                                        <option value="ml(s)" <%= lembrete.estoqueUnidade === "ml(s)" ? "selected" : "" %>>ml(s)</option>
+                                    </select>
+                                </div>
+                            </span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Avisar quando tiver</span>
+                            <input type="number" min="0" id="aviso_estoque" name="aviso_estoque" class="form-control" placeholder="Adicione uma quantidade" value="<%= lembrete.avisoEstoqueQuantidade %>">
+                            <span class="input-group-text">
+                                <div class="dropdown">
+                                    <select class="form-select" id="aviso-unidade" name="aviso-unidade" disabled>
+                                        <option value="">Selecione uma opção</option>
+                                        <option value="Comprimido(s)" <%= lembrete.avisoEstoqueUnidade === "Comprimido(s)" ? "selected" : "" %>>Comprimido(s)</option>
+                                        <option value="Cápsulas(s)" <%= lembrete.avisoEstoqueUnidade === "Cápsulas(s)" ? "selected" : "" %>>Cápsulas(s)</option>
+                                        <option value="Dose(s)" <%= lembrete.avisoEstoqueUnidade === "Dose(s)" ? "selected" : "" %>>Dose(s)</option>
+                                        <option value="Injeção(ões)" <%= lembrete.avisoEstoqueUnidade === "Injeção(ões)" ? "selected" : "" %>>Injeção(ões)</option>
+                                        <option value="Aplicação(ões)" <%= lembrete.avisoEstoqueUnidade === "Aplicação(ões)" ? "selected" : "" %>>Aplicação(ões)</option>
+                                        <option value="ml(s)" <%= lembrete.avisoEstoqueUnidade === "ml(s)" ? "selected" : "" %>>ml(s)</option>
+                                    </select>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="container">
                     <footer class="border-bottom py-2 fixed-bottom text-center">
                         <div class="row align-items-center">
@@ -151,11 +196,13 @@ header, footer{
             </form>
         </main>
     </div>
+    
     <script>
 function updateTimeInputs() {
     const frequency = document.getElementById("frequencia").value;
     const timeInputs = document.getElementById("time-inputs");
     const doseInput = document.getElementById("dose-input");
+    const reporEstoque = document.getElementById("repor-estoque");
     timeInputs.innerHTML = '';  // Limpar inputs de horário
 
     if (frequency === "Uma vez ao dia") {
@@ -166,6 +213,7 @@ function updateTimeInputs() {
             </div>
         `;
         doseInput.style.display = 'block';
+        reporEstoque.style.display = 'block';
     } else if (frequency === "Duas vezes ao dia") {
         timeInputs.innerHTML = `
             <h4 class="form-heading">Quando você gostaria de ser lembrado?</h4>
@@ -177,44 +225,83 @@ function updateTimeInputs() {
             </div>
         `;
         doseInput.style.display = 'block';
+        reporEstoque.style.display = 'block';
+    } else if (frequency === "Três vezes ao dia") {
+        timeInputs.innerHTML = `
+            <h4 class="form-heading">Quando você gostaria de ser lembrado?</h4>
+            <div class="d-flex flex-column container">
+                <label for="horario1">Primeiro Horário:</label>
+                <input class="form-select" type="time" id="horario1" name="horario1" value="<%= lembrete.horario1 %>" required>
+                <label for="horario2">Segundo Horário:</label>
+                <input class="form-select" type="time" id="horario2" name="horario2" value="<%= lembrete.horario2 %>" required>
+                <label for="horario3">Terceiro Horário:</label>
+                <input class="form-select" type="time" id="horario3" name="horario3" value="<%= lembrete.horario3 %>" required>
+            </div>
+        `;
+        doseInput.style.display = 'block';
+        reporEstoque.style.display = 'block';
     } else {
         timeInputs.innerHTML = '';
         doseInput.style.display = 'none';
     }
 }
-            const frequency = document.getElementById("frequencia").value;
-            const timeInputs = document.getElementById("time-inputs");
-            const doseInput = document.getElementById("dose-input");
-            timeInputs.innerHTML = '';  // Limpar inputs de horário
 
-            if (frequency === "Uma vez ao dia") {
-                timeInputs.innerHTML = `
-                    <h4 class="form-heading">Quando você gostaria de ser lembrado?</h4>
-                    <div class="d-flex flex-column container">
-                        <input class="form-select" type="time" id="horario1" name="horario1" value="<%= lembrete.horario1 %>" required>
-                    </div>
-                `;
-                doseInput.style.display = 'block';
-            } else if (frequency === "Duas vezes ao dia") {
-                timeInputs.innerHTML = `
-                    <h4 class="form-heading">Quando você gostaria de ser lembrado?</h4>
-                    <div class="d-flex flex-column container">
-                        <label for="horario1">Primeiro Horário:</label>
-                        <input class="form-select" type="time" id="horario1" name="horario1" value="<%= lembrete.horario1 %>" required>
-                        <label for="horario2">Segundo Horário:</label>
-                        <input class="form-select" type="time" id="horario2" name="horario2" value="<%= lembrete.horario2 %>" required>
-                    </div>
-                `;
-                doseInput.style.display = 'block';
+        function toggleStockReminder() {
+            const checkbox = document.getElementById("flexSwitchCheckChecked");
+            const estoqueInput = document.getElementById("estoque");
+            const avisoEstoqueInput = document.getElementById("aviso_estoque");
+            const estoqueUnidadeSelect = document.getElementById("estoque-unidade");
+            const avisoUnidadeSelect = document.getElementById("aviso-unidade");
+            const estoqueHeading = document.getElementById("estoque-heading");
+            const stockInputs = document.getElementById("stock-inputs");
+
+            if (checkbox.checked) {
+                estoqueHeading.style.opacity = "1";
+                stockInputs.classList.remove("disabled-section");
+                const inputs = stockInputs.querySelectorAll("input, select");
+                inputs.forEach(input => {
+                    input.disabled = false;
+                });
+                avisoUnidadeSelect.disabled = true;
             } else {
-                timeInputs.innerHTML = '';
-                doseInput.style.display = 'none';
+                estoqueHeading.style.opacity = "0.5";
+                stockInputs.classList.add("disabled-section");
+                const inputs = stockInputs.querySelectorAll("input, select");
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    input.value = ""; // Limpar os valores dos inputs
+                });
+                avisoUnidadeSelect.disabled = true;
             }
-            window.onload = function() {
-                document.getElementById('frequencia').value = "<%= lembrete.frequencia %>";
-                document.getElementById('dose').value = "<%= lembrete.dose %>";
-                updateTimeInputs();
-            };
+        }
+
+        function syncUnits() {
+            const estoqueUnidade = document.getElementById("estoque-unidade").value;
+            const avisoUnidade = document.getElementById("aviso-unidade");
+            avisoUnidade.value = estoqueUnidade;
+
+            const checkbox = document.getElementById("flexSwitchCheckChecked");
+            if (!checkbox.checked) {
+                // Limpar valores dos inputs quando o checkbox estiver desmarcado
+                document.getElementById("estoque").value = "";
+                document.getElementById("aviso_estoque").value = "";
+            }
+        }
+
+
+        window.onload = function() {
+            document.getElementById('frequencia').value = "<%= lembrete.frequencia %>";
+            document.getElementById('dose').value = "<%= lembrete.dose %>";
+            updateTimeInputs();
+            toggleStockReminder();
+
+            const estoque = "<%= lembrete.estoqueQuantidade %>";
+            const avisoEstoque = "<%= lembrete.avisoEstoqueQuantidade %>";
+
+            if (!estoque && !avisoEstoque) {
+                document.getElementById("flexSwitchCheckChecked").checked = false;
+            }
+        };
 
         function searchMedicamentos() {
             const searchTerm = document.getElementById('searchMedicamento').value;

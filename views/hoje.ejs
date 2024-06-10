@@ -17,7 +17,7 @@
       margin: 10px;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 4px 8px #39c287;
+      box-shadow: 0 4px 8px #c23e39;
       transition: transform 0.2s;
     }
     .card:hover {
@@ -75,19 +75,23 @@
 <main class="py-5">
   <div class="mt-5 pt-2 mb-5 text-center text-muted container d-flex flex-column">
     <h1 class="text-body-emphasis">Seus lembretes</h1>
-    <div class="row">
+    <div class="w-100 text-center container row">
       <%
         const lembretesConsolidados = [];
         
         // Consolidar lembretes com horários separados
         lembretes.forEach(lembrete => {
-          if (lembrete.frequencia === 'Uma vez ao dia') {
-            lembretesConsolidados.push({ horario: lembrete.horario1, nome_medicamento: lembrete.nome_medicamento });
-          } else if (lembrete.frequencia === 'Duas vezes ao dia') {
-            lembretesConsolidados.push({ horario: lembrete.horario1, nome_medicamento: lembrete.nome_medicamento });
-            lembretesConsolidados.push({ horario: lembrete.horario2, nome_medicamento: lembrete.nome_medicamento });
-          }
-        });
+  if (lembrete.frequencia === 'Uma vez ao dia') {
+    lembretesConsolidados.push({ id_lembrete: lembrete.id_lembrete, horario: lembrete.horario1, nome_medicamento: lembrete.nome_medicamento });
+  } else if (lembrete.frequencia === 'Duas vezes ao dia') {
+    lembretesConsolidados.push({ id_lembrete: lembrete.id_lembrete, horario: lembrete.horario1, nome_medicamento: lembrete.nome_medicamento });
+    lembretesConsolidados.push({ id_lembrete: lembrete.id_lembrete, horario: lembrete.horario2, nome_medicamento: lembrete.nome_medicamento });
+  } else if (lembrete.frequencia === 'Três vezes ao dia') {
+    lembretesConsolidados.push({ id_lembrete: lembrete.id_lembrete, horario: lembrete.horario1, nome_medicamento: lembrete.nome_medicamento });
+    lembretesConsolidados.push({ id_lembrete: lembrete.id_lembrete, horario: lembrete.horario2, nome_medicamento: lembrete.nome_medicamento });
+    lembretesConsolidados.push({ id_lembrete: lembrete.id_lembrete, horario: lembrete.horario3, nome_medicamento: lembrete.nome_medicamento });
+  }
+});
 
         // Ordenar os lembretes pelo horário
         lembretesConsolidados.sort((a, b) => {
@@ -96,9 +100,9 @@
       %>
 
       <% if (lembretesConsolidados.length > 0) { %>
-          <% lembretesConsolidados.forEach((lembrete) => { %>
-            <div class="col-md-6 col-lg-12 col-sm-6">
-              <div class="card">
+        <% lembretesConsolidados.forEach((lembrete) => { %>
+          <div class="col-md-6 col-lg-6 col-sm-6">
+            <div class="card" id="card-<%= lembrete.id_lembrete %>">
                 <div class="card-header" data-horario="<%= lembrete.horario %>">
                   <%= lembrete.horario %>
                 </div>
@@ -106,7 +110,7 @@
                   <p><strong>Medicamento:</strong> <%= lembrete.nome_medicamento %></p>
                 </div>
                 <div class="card-footer">
-                  <button class="btn btn-confirm w-100">Confirmar</button>
+                  <button class="btn btn-confirm w-100" id="btn-confirm-<%= lembrete.id_lembrete %>" onclick="confirmarMedicamento('<%= lembrete.id_lembrete %>')">Confirmar</button>
                 </div>
               </div>
             </div>
@@ -192,6 +196,84 @@
   }
 
   requestNotificationPermission();
+
+  function confirmarMedicamento(idLembrete) {
+  console.log('ID do Lembrete:', idLembrete); // Log para depuração
+  fetch(`/confirmarMedicamento/${idLembrete}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ id_lembrete: idLembrete })
+  })
+  .then(response => {
+    if (response.ok) {
+      const card = document.getElementById(`card-${idLembrete}`);
+      const button = document.getElementById(`btn-confirm-${idLembrete}`);
+      card.style.boxShadow = '0 4px 8px green';
+      button.style.backgroundColor = '#28d4ff';
+      button.innerHTML = '✓';
+    } else {
+      alert('Erro ao confirmar o medicamento');
+    }
+  })
+  .catch(error => {
+    console.error('Erro:', error);
+    alert('Erro ao confirmar o medicamento');
+  });
+}
+
+function resetCards() {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    card.style.boxShadow = '0 4px 8px #c23e39';
+    const button = card.querySelector('.btn-confirm');
+    button.style.backgroundColor = '#39bfc2';
+    button.innerHTML = 'Confirmar';
+  });
+}
+
+// Chame essa função à meia-noite para resetar os cards
+const resetIndicator = localStorage.getItem('cardsReset');
+if (!resetIndicator) {
+  const now = new Date();
+  const millisTillMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0) - now;
+  setTimeout(function() {
+    resetCards();
+    setInterval(resetCards, 24 * 60 * 60 * 1000); // reset todos os dias
+    localStorage.setItem('cardsReset', 'true'); // Armazenar o indicador de reset
+  }, millisTillMidnight);
+}
+// Calcular o tempo restante até o próximo reset com base na última data/hora de reset do usuário
+async function calculateTimeToReset() {
+  try {
+    const response = await fetch('/getLastResetTime');
+    const data = await response.json();
+    
+    if (data.success) {
+      const lastResetTime = new Date(data.lastResetTime);
+      const now = new Date();
+      const timeSinceLastReset = now - lastResetTime;
+      const timeUntilNextReset = 24 * 60 * 60 * 1000 - timeSinceLastReset;
+      
+      // Se o tempo até o próximo reset for negativo, já é hora de resetar
+      if (timeUntilNextReset < 0) {
+        resetCards();
+      } else {
+        setTimeout(resetCards, timeUntilNextReset);
+        setInterval(resetCards, 24 * 60 * 60 * 1000);
+      }
+    } else {
+      console.error('Erro ao obter a última data/hora de reset dos cards:', data.message);
+    }
+  } catch (error) {
+    console.error('Erro ao calcular o tempo até o próximo reset dos cards:', error);
+  }
+}
+
+// Chamar a função para calcular o tempo até o próximo reset
+calculateTimeToReset();
+
 </script>
 <script src="scripts.js"></script>
 
